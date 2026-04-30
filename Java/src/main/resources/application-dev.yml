@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: Java
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/${POSTGRES_DB}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: true
+
+logging:
+  level:
+    root: INFO
+    org.hibernate: INFO
+    org.springframework.data.*.*: INFO
+    org.springframework.cache.*.*: INFO
+    org.springframework.web.*.*: INFO
+    org.apache: INFO
+    com.example.api: INFO
+    com.zaxxer.hikari: INFO
