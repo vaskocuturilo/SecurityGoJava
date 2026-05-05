@@ -25,6 +25,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     implementation 'org.springframework.boot:spring-boot-starter-flyway'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation "com.auth0:java-jwt:${jwtVersion}"
+    implementation "org.mapstruct:mapstruct:${mapstruct}"
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
     //migration
@@ -37,6 +39,9 @@ dependencies {
     //Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
+
+    //Map structure
+    annotationProcessor "org.mapstruct:mapstruct-processor:${mapstruct}"
 
     //Testing
     testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
