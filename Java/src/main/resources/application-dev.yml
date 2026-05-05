@@ -2,6 +2,10 @@ spring:
   application:
     name: Java
 
+  config:
+    activate:
+      on-profile: dev
+
   datasource:
     url: jdbc:postgresql://localhost:5432/${POSTGRES_DB}
     username: ${POSTGRES_USER}
@@ -29,3 +33,12 @@ logging:
     org.apache: INFO
     com.example.api: INFO
     com.zaxxer.hikari: INFO
+
+security:
+  jwt:
+    token:
+      secret-key: my-secret-key
+
+http:
+  auth-token-header-name: X-API-KEY
+  auth-token: test123

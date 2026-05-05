@@ -5,6 +5,10 @@ spring:
   application:
     name: Java
 
+  config:
+    activate:
+      on-profile: docker
+
   datasource:
     url: jdbc:postgresql://postgres/${POSTGRES_DB}
     username: ${POSTGRES_USER}
@@ -22,10 +26,6 @@ spring:
   flyway:
     enabled: true
 
-  config:
-    activate:
-      on-profile: docker
-
 #logging
 logging:
   level:
@@ -37,3 +37,12 @@ logging:
     org.apache: DEBUG
     com.example.api: DEBUG
     com.zaxxer.hikari: DEBUG
+
+security:
+  jwt:
+    token:
+      secret-key: my-secret-key
+
+http:
+  auth-token-header-name: X-API-KEY
+  auth-token: test123

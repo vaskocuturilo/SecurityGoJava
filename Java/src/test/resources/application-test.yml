@@ -3,3 +3,7 @@ spring:
     hibernate:
       ddl-auto: validate
     show-sql: true
+
+http:
+  auth-token-header-name: X-API-KEY
+  auth-token: test123
