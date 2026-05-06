@@ -1,5 +1,6 @@
-package com.example.java.filter;
+package com.example.java.config.filter;
 
+import com.example.java.config.path.SecurityConstants;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,6 +13,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -21,18 +23,11 @@ public class APIKeyAuthFilter extends OncePerRequestFilter {
     private final String principalRequestHeader;
     private final String principalRequestValue;
 
-    private static final List<String> PUBLIC_PATHS = List.of(
-            "/v3/api-docs",
-            "/swagger-ui",
-            "/api/v1/users/email",
-            "/api/v1/users/register",
-            "/api/v1/users/active"
-    );
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getRequestURI();
-        return PUBLIC_PATHS.stream().anyMatch(path::startsWith);
+        final String path = request.getRequestURI();
+        return Arrays.stream(SecurityConstants.PUBLIC_ROUTES).anyMatch(path::startsWith);
     }
 
     @Override
@@ -41,7 +36,7 @@ public class APIKeyAuthFilter extends OncePerRequestFilter {
                                     @NonNull FilterChain filterChain)
             throws ServletException, IOException {
 
-        String apiKey = request.getHeader(principalRequestHeader);
+        final String apiKey = request.getHeader(principalRequestHeader);
 
         if (!principalRequestValue.equals(apiKey)) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -51,9 +46,12 @@ public class APIKeyAuthFilter extends OncePerRequestFilter {
         }
 
 
-        UsernamePasswordAuthenticationToken authentication =
+        final UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(apiKey, null, List.of());
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        }
 
         filterChain.doFilter(request, response);
     }

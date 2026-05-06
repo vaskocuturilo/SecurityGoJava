@@ -42,6 +42,7 @@ security:
   jwt:
     token:
       secret-key: my-secret-key
+      expiration: 300000
 
 http:
   auth-token-header-name: X-API-KEY
