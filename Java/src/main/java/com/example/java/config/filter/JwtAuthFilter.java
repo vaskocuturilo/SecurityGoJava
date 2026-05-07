@@ -1,15 +1,18 @@
 package com.example.java.config.filter;
 
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.example.java.config.UserAuthenticationProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import java.io.IOException;
 
@@ -18,9 +21,15 @@ import java.io.IOException;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final UserAuthenticationProvider userAuthenticationProvider;
+    private final HandlerExceptionResolver handlerExceptionResolver;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         final String header = request.getHeader(HttpHeaders.AUTHORIZATION);
 
         if (header == null) {
@@ -33,16 +42,18 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         if (authElements.length != 2 || !"Bearer".equals(authElements[0])) {
             SecurityContextHolder.clearContext();
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            handlerExceptionResolver.resolveException(
+                    request, response, null,
+                    new JWTVerificationException("Malformed authorization header"));
             return;
         }
 
         try {
-            SecurityContextHolder.getContext().setAuthentication(
-                    userAuthenticationProvider.validateToken(authElements[1]));
-        } catch (RuntimeException e) {
+            SecurityContextHolder.getContext().setAuthentication(userAuthenticationProvider.validateTokenStrongly(authElements[1]));
+        } catch (JWTVerificationException exception) {
             SecurityContextHolder.clearContext();
-            throw e;
+            handlerExceptionResolver.resolveException(request, response, null, exception);
+            return;
         }
         filterChain.doFilter(request, response);
     }

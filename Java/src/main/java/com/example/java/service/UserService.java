@@ -12,7 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.nio.CharBuffer;
-import java.time.LocalDateTime;
+import java.util.Arrays;
 
 @Service
 public class UserService implements IUserService {
@@ -41,11 +41,14 @@ public class UserService implements IUserService {
             throw new UserException("The user is not enabled", HttpStatus.FORBIDDEN);
         }
 
-        if (passwordEncoder.matches(CharBuffer.wrap(credentials.password()), user.getPassword())) {
-            return userMapper.toUserDto(user);
+        try {
+            if (passwordEncoder.matches(CharBuffer.wrap(credentials.password()), user.getPassword())) {
+                return userMapper.toUserDto(user);
+            }
+            throw new UserException("Invalid password", HttpStatus.BAD_REQUEST);
+        } finally {
+            Arrays.fill(credentials.password(), '\0');
         }
-
-        throw new UserException("Invalid password", HttpStatus.BAD_REQUEST);
     }
 
     public UserDto register(final SignUpDto userDto) {
@@ -55,17 +58,15 @@ public class UserService implements IUserService {
 
         final UserEntity user = new UserEntity();
 
-        user.setPassword(passwordEncoder.encode(CharBuffer.wrap(userDto.password())));
-
-        user.setUsername(userDto.email());
+        try {
+            user.setPassword(passwordEncoder.encode(CharBuffer.wrap(userDto.password())));
+        } finally {
+            Arrays.fill(userDto.password(), '\0');
+        }
 
         user.setEmail(userDto.email());
 
-        user.setEnabled(true);
-
-        user.setCreatedAt(LocalDateTime.now());
-
-        user.setUpdatedAt(LocalDateTime.now());
+        user.setUsername(userDto.email());
 
         final UserEntity savedUser = userRepository.save(user);
 

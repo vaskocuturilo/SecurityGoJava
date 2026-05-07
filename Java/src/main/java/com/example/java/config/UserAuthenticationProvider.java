@@ -7,7 +7,7 @@ import com.auth0.jwt.interfaces.JWTVerifier;
 import com.example.java.dto.UserDto;
 import com.example.java.service.UserService;
 import jakarta.annotation.PostConstruct;
-import lombok.Data;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -17,7 +17,7 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
 
-@Data
+@Getter
 @Component
 public class UserAuthenticationProvider {
 
@@ -29,6 +29,9 @@ public class UserAuthenticationProvider {
 
     private final UserService userService;
 
+    public UserAuthenticationProvider(UserService userService) {
+        this.userService = userService;
+    }
 
     @PostConstruct
     protected void init() {
@@ -41,35 +44,17 @@ public class UserAuthenticationProvider {
 
         final Algorithm algorithm = Algorithm.HMAC256(secretKey);
         return JWT.create()
-                .withSubject(user.getEmail())
+                .withSubject(user.email())
                 .withIssuedAt(now)
                 .withExpiresAt(validity)
-                .withClaim("username", user.getUsername())
+                .withClaim("username", user.username())
                 .sign(algorithm);
-    }
-
-    public Authentication validateToken(String token) {
-        final Algorithm algorithm = Algorithm.HMAC256(secretKey);
-
-        final JWTVerifier verifier = JWT.require(algorithm)
-                .build();
-
-        final DecodedJWT decoded = verifier.verify(token);
-
-        final UserDto user = UserDto.builder()
-                .email(decoded.getSubject())
-                .username(decoded.getClaim("username").asString())
-                .email(decoded.getClaim("email").asString())
-                .build();
-
-        return new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
     }
 
     public Authentication validateTokenStrongly(String token) {
         final Algorithm algorithm = Algorithm.HMAC256(secretKey);
 
-        final JWTVerifier verifier = JWT.require(algorithm)
-                .build();
+        final JWTVerifier verifier = JWT.require(algorithm).build();
 
         final DecodedJWT decoded = verifier.verify(token);
 
