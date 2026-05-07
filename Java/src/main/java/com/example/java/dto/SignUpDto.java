@@ -1,9 +1,20 @@
 package com.example.java.dto;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
 import java.util.Arrays;
 import java.util.Objects;
 
-public record SignUpDto(String email, char[] password) {
+public record SignUpDto(
+        @Email(message = "Email is not valid", regexp = "^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$")
+        @NotEmpty(message = "Email cannot be empty") String email,
+
+        @NotNull(message = "Password cannot be null")
+        @Size(min = 8, message = "Password must be at least 8 characters")
+        char[] password) {
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof SignUpDto(String email1, char[] password1))) return false;
@@ -22,7 +33,7 @@ public record SignUpDto(String email, char[] password) {
     public String toString() {
         return "SignUpDto{" +
                 "email='" + email + '\'' +
-                ", password=" + Arrays.toString(password) +
+                ", password=[PROTECTED]" +
                 '}';
     }
 }

@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -36,18 +37,28 @@ class RestTaskControllerV1Test extends AbstractRestControllerBaseTest {
         mockMvc.perform(MockMvcRequestBuilders
                         .get(ENDPOINT_PATH)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON).header(headerName, authToken))
+                        .accept(MediaType.APPLICATION_JSON).header(headerName, authToken)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + generateTestToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[*]").isNotEmpty())
                 .andExpect(jsonPath("$[*]", hasSize(3)));
     }
 
     @Test
-    void givenWithoutAPikey_whenGetTasksWithoutApiKey_thenStatus401() throws Exception {
+    void givenTasks_whenGetTasks_thenStatus401() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders
+                        .get(ENDPOINT_PATH)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON).header(headerName, authToken))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void givenWithoutAPikey_whenGetTasksWithoutApiKey_thenStatus403() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders
                         .get(ENDPOINT_PATH)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
     }
 }

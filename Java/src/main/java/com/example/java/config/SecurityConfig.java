@@ -3,6 +3,7 @@ package com.example.java.config;
 
 import com.example.java.config.filter.APIKeyAuthFilter;
 import com.example.java.config.filter.JwtAuthFilter;
+import com.example.java.config.filter.UnauthorizedEntryPoint;
 import com.example.java.config.path.SecurityConstants;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -26,14 +27,16 @@ public class SecurityConfig {
     private final String principalRequestHeader;
     private final String principalRequestValue;
     private final JwtAuthFilter jwtAuthFilter;
+    private final UnauthorizedEntryPoint unauthorizedEntryPoint;
 
 
     public SecurityConfig(
             @Value("${http.auth-token-header-name}") String principalRequestHeader,
-            @Value("${http.auth-token}") String principalRequestValue, JwtAuthFilter jwtAuthFilter) {
+            @Value("${http.auth-token}") String principalRequestValue, JwtAuthFilter jwtAuthFilter, UnauthorizedEntryPoint unauthorizedEntryPoint) {
         this.principalRequestHeader = principalRequestHeader;
         this.principalRequestValue = principalRequestValue;
         this.jwtAuthFilter = jwtAuthFilter;
+        this.unauthorizedEntryPoint = unauthorizedEntryPoint;
     }
 
     @Bean
@@ -47,8 +50,10 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class);
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(unauthorizedEntryPoint))
+                .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(jwtAuthFilter, APIKeyAuthFilter.class);
 
         return http.build();
     }
