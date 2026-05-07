@@ -73,8 +73,8 @@ public class UserService implements IUserService {
         return userMapper.toUserDto(savedUser);
     }
 
-    public UserDto findByLogin(final String login) {
-        final UserEntity user = userRepository.findByEmail(login)
+    public UserDto findByLogin(final String email) {
+        final UserEntity user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserException(UNKNOWN_USER, HttpStatus.NOT_FOUND));
         return userMapper.toUserDto(user);
     }
