@@ -1,8 +1,11 @@
 package com.example.java.service;
 
+import com.example.java.config.UserAuthenticationProvider;
+import com.example.java.dto.AuthResponse;
 import com.example.java.dto.CredentialsDto;
 import com.example.java.dto.SignUpDto;
 import com.example.java.dto.UserDto;
+import com.example.java.entity.RefreshTokenEntity;
 import com.example.java.entity.UserEntity;
 import com.example.java.exception.UserException;
 import com.example.java.mapper.UserMapper;
@@ -19,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.nio.CharBuffer;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -38,6 +42,12 @@ class UserServiceTest {
     private UserService userService;
 
     @Mock
+    private RefreshTokenService refreshTokenService;
+
+    @Mock
+    private UserAuthenticationProvider userAuthenticationProvider;
+
+    @Mock
     private UserMapper userMapper;
 
     @Mock
@@ -50,6 +60,10 @@ class UserServiceTest {
     private static final String TEST_EMAIL = "title@title.com";
 
     private static final String TEST_PASSWORD = "description";
+
+    private static final String MOCKED_ACCESS_TOKEN = "mocked-access-token";
+
+    private static final String MOCKED_REFRESH_TOKEN = "mocked-refresh-token";
 
     @BeforeEach
     void setupTestUser() {
@@ -73,12 +87,22 @@ class UserServiceTest {
         BDDMockito.given(passwordEncoder.matches(any(CharBuffer.class), eq(TEST_PASSWORD))).willReturn(true);
         BDDMockito.given(userMapper.toUserDto(testUser)).willReturn(testUserDto);
 
+        BDDMockito.given(userAuthenticationProvider.createToken(testUserDto)).willReturn(MOCKED_ACCESS_TOKEN);
+
+        BDDMockito.given(refreshTokenService.createRefreshToken(TEST_EMAIL))
+                .willReturn(RefreshTokenEntity.builder()
+                        .token(MOCKED_REFRESH_TOKEN)
+                        .user(testUser)
+                        .expiresAt(LocalDateTime.now().plusDays(7))
+                        .revoked(false)
+                        .build());
+
         //when
-        final UserDto result = userService.login(credentials);
+        final AuthResponse result = userService.login(credentials);
 
         //then
         assertThat(result).isNotNull();
-        assertThat(result.email()).isEqualTo(TEST_EMAIL);
+        assertThat(result.user().email()).isEqualTo(TEST_EMAIL);
         verify(userRepository).findByEmail(TEST_EMAIL);
         verify(passwordEncoder).matches(any(CharBuffer.class), eq(TEST_PASSWORD));
     }
@@ -152,8 +176,17 @@ class UserServiceTest {
 
         BDDMockito.given(userMapper.toUserDto(testUser)).willReturn(testUserDto);
 
+        BDDMockito.given(userAuthenticationProvider.createToken(testUserDto)).willReturn(MOCKED_ACCESS_TOKEN);
+        BDDMockito.given(refreshTokenService.createRefreshToken(TEST_EMAIL))
+                .willReturn(RefreshTokenEntity.builder()
+                        .token(MOCKED_REFRESH_TOKEN)
+                        .user(testUser)
+                        .expiresAt(LocalDateTime.now().plusDays(7))
+                        .revoked(false)
+                        .build());
+
         // when
-        final UserDto result = userService.register(signUpDto);
+        final AuthResponse result = userService.register(signUpDto);
 
         // then
         assertThat(result).isNotNull();

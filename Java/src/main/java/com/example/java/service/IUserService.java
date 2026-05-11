@@ -1,12 +1,15 @@
 package com.example.java.service;
 
-import com.example.java.dto.CredentialsDto;
-import com.example.java.dto.SignUpDto;
-import com.example.java.dto.UserDto;
+import com.example.java.dto.*;
 
 public interface IUserService {
 
-    UserDto login(final CredentialsDto credentials);
+    AuthResponse login(final CredentialsDto credentials);
 
-    UserDto register(final SignUpDto userDto);
+    AuthResponse register(final SignUpDto userDto);
+
+    AuthResponse refresh(final RefreshTokenRequest request);
+
+
+    void logoutAll(final String email);
 }

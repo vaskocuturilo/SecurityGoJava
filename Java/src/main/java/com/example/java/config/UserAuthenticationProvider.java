@@ -3,9 +3,7 @@ package com.example.java.config;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.auth0.jwt.interfaces.JWTVerifier;
 import com.example.java.dto.UserDto;
-import com.example.java.service.UserService;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,12 +25,6 @@ public class UserAuthenticationProvider {
     @Value("${security.jwt.token.expiration:300000}")
     private long expiration;
 
-    private final UserService userService;
-
-    public UserAuthenticationProvider(UserService userService) {
-        this.userService = userService;
-    }
-
     @PostConstruct
     protected void init() {
         secretKey = Base64.getEncoder().encodeToString(secretKey.getBytes());
@@ -51,15 +43,23 @@ public class UserAuthenticationProvider {
                 .sign(algorithm);
     }
 
-    public Authentication validateTokenStrongly(String token) {
+    public Authentication validateToken(String token) {
         final Algorithm algorithm = Algorithm.HMAC256(secretKey);
+        final DecodedJWT decoded = JWT.require(algorithm).build().verify(token);
 
-        final JWTVerifier verifier = JWT.require(algorithm).build();
-
-        final DecodedJWT decoded = verifier.verify(token);
-
-        final UserDto user = userService.findByLogin(decoded.getSubject());
+        final UserDto user = UserDto.builder()
+                .email(decoded.getSubject())
+                .username(decoded.getClaim("username").asString())
+                .build();
 
         return new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
+    }
+
+    public String extractEmail(String token) {
+        final Algorithm algorithm = Algorithm.HMAC256(secretKey);
+        return JWT.require(algorithm)
+                .build()
+                .verify(token)
+                .getSubject();
     }
 }

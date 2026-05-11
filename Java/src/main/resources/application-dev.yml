@@ -38,7 +38,9 @@ security:
   jwt:
     token:
       secret-key: my-secret-key
-      expiration: 300000
+      expiration: 30000
+    refresh-token:
+      expiration: 604800000
 
 http:
   auth-token-header-name: X-API-KEY
