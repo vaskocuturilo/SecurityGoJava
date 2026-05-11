@@ -1,16 +1,14 @@
 package com.example.java.rest;
 
 
-import com.example.java.config.UserAuthenticationProvider;
-import com.example.java.dto.AuthResponse;
-import com.example.java.dto.CredentialsDto;
-import com.example.java.dto.SignUpDto;
-import com.example.java.dto.UserDto;
+import com.example.java.dto.*;
 import com.example.java.service.IUserService;
+import com.example.java.service.RefreshTokenService;
 import jakarta.validation.Valid;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,27 +22,37 @@ import java.net.URI;
 public class UserRestControllerV1 {
 
     private final IUserService userService;
-    private final UserAuthenticationProvider userAuthenticationProvider;
+    private final RefreshTokenService refreshTokenService;
 
     @PostMapping("/login")
     public ResponseEntity<@NonNull AuthResponse> login(@RequestBody @Valid CredentialsDto credentials) {
-        final UserDto userDto = userService.login(credentials);
-        final String token = userAuthenticationProvider.createToken(userDto);
-
-        return ResponseEntity.ok(new AuthResponse(userDto, token));
+        return ResponseEntity.ok(userService.login(credentials));
     }
 
     @PostMapping("/register")
     public ResponseEntity<@NonNull AuthResponse> register(@RequestBody @Valid SignUpDto userSignUp) {
-        final UserDto createdUser = userService.register(userSignUp);
-        final String token = userAuthenticationProvider.createToken(createdUser);
+        final AuthResponse response = userService.register(userSignUp);
         return ResponseEntity
-                .created(URI.create("/users/" + createdUser.id()))
-                .body(new AuthResponse(createdUser, token));
+                .created(URI.create("/users/" + response.user().id()))
+                .body(response);
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<@NonNull AuthResponse> refresh(@RequestBody @Valid RefreshTokenRequest request) {
+        return ResponseEntity.ok(userService.refresh(request));
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<@NonNull Void> logout() {
+    public ResponseEntity<@NonNull Void> logout(@RequestBody @Valid RefreshTokenRequest request) {
+        refreshTokenService.logout(request);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/logout-all")
+    public ResponseEntity<@NonNull Void> logoutAll(@AuthenticationPrincipal UserDto user) {
+        userService.logoutAll(user.email());
+
         return ResponseEntity.ok().build();
     }
 }

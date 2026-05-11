@@ -4,6 +4,14 @@ spring:
       ddl-auto: validate
     show-sql: true
 
+security:
+  jwt:
+    token:
+      secret-key: my-secret-key
+      expiration: 30000
+    refresh-token:
+      expiration: 604800000
+
 http:
   auth-token-header-name: X-API-KEY
   auth-token: test123
