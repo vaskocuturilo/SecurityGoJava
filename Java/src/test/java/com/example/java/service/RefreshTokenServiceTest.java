@@ -18,8 +18,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -27,7 +25,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatNoException;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class RefreshTokenServiceTest {
@@ -229,34 +228,31 @@ class RefreshTokenServiceTest {
     @DisplayName("Test revoke by user")
     void givenUserWithTokens_whenRevokeByUser_thenAllTokensRevoked() {
         // given
-        final RefreshTokenEntity secondToken = RefreshTokenEntity.builder()
-                .token("second-token")
-                .user(testUser)
-                .expiresAt(LocalDateTime.now().plusDays(3))
-                .revoked(false)
-                .build();
-
-        BDDMockito.given(refreshTokenRepository.findAllByUser(testUser)).willReturn(List.of(testToken, secondToken));
+        BDDMockito.willDoNothing()
+                .given(refreshTokenRepository)
+                .revokeAllByUser(testUser);
 
         // when
         refreshTokenService.revokeByUser(testUser);
 
         // then
-        assertThat(testToken.isRevoked()).isTrue();
-        assertThat(secondToken.isRevoked()).isTrue();
-        verify(refreshTokenRepository, times(2)).save(any(RefreshTokenEntity.class));
+        verify(refreshTokenRepository, never()).findAllByUser(any());
+        verify(refreshTokenRepository, never()).save(any());
     }
 
     @Test
     @DisplayName("Test revoke by user with no tokens")
     void givenUserWithNoTokens_whenRevokeByUser_thenNothingHappens() {
         // given
-        BDDMockito.given(refreshTokenRepository.findAllByUser(testUser)).willReturn(Collections.emptyList());
+        BDDMockito.willDoNothing()
+                .given(refreshTokenRepository)
+                .revokeAllByUser(testUser);
 
         // when
         refreshTokenService.revokeByUser(testUser);
 
         // then
         verify(refreshTokenRepository, never()).save(any());
+        verify(refreshTokenRepository, never()).findAllByUser(any());
     }
 }

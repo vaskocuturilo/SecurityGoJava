@@ -79,10 +79,6 @@ public class RefreshTokenService implements IRefreshTokenService {
 
     @Transactional
     public void revokeByUser(UserEntity user) {
-        refreshTokenRepository.findAllByUser(user)
-                .forEach(token -> {
-                    token.setRevoked(true);
-                    refreshTokenRepository.save(token);
-                });
+        refreshTokenRepository.revokeAllByUser(user);
     }
 }

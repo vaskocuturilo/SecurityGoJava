@@ -36,12 +36,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<@NonNull ErrorResponseDto> handleUserExist(UserException exception) {
         final ErrorResponseDto issue = new ErrorResponseDto(
                 "The user issue",
-                HttpStatus.BAD_REQUEST.value(),
+                exception.getStatus().value(),
                 exception.getMessage(),
                 LocalDateTime.now());
 
         return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
+                .status(exception.getStatus())
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(issue);
     }
