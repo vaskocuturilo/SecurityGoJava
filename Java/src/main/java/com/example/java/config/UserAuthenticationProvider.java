@@ -2,17 +2,13 @@ package com.example.java.config;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.interfaces.DecodedJWT;
 import com.example.java.dto.UserDto;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import java.util.Base64;
-import java.util.Collections;
 import java.util.Date;
 
 @Getter
@@ -41,18 +37,6 @@ public class UserAuthenticationProvider {
                 .withExpiresAt(validity)
                 .withClaim("username", user.username())
                 .sign(algorithm);
-    }
-
-    public Authentication validateToken(String token) {
-        final Algorithm algorithm = Algorithm.HMAC256(secretKey);
-        final DecodedJWT decoded = JWT.require(algorithm).build().verify(token);
-
-        final UserDto user = UserDto.builder()
-                .email(decoded.getSubject())
-                .username(decoded.getClaim("username").asString())
-                .build();
-
-        return new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
     }
 
     public String extractEmail(String token) {
