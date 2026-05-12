@@ -33,46 +33,46 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         final String path = request.getRequestURI();
-        return Arrays.stream(SecurityConstants.PUBLIC_ROUTES).anyMatch(path::startsWith);
+        return Arrays.asList(SecurityConstants.PUBLIC_ROUTES).contains(path);
     }
 
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
-        if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+    protected void doFilterInternal(@NonNull HttpServletRequest request,
+                                    @NonNull HttpServletResponse response,
+                                    @NonNull FilterChain filterChain)
+            throws ServletException, IOException {
 
         final String header = request.getHeader(HttpHeaders.AUTHORIZATION);
 
         if (header == null) {
-            SecurityContextHolder.clearContext();
-            filterChain.doFilter(request, response);
+            handlerExceptionResolver.resolveException(request, response, null,
+                    new JWTVerificationException("Missing authorization header"));
             return;
         }
 
-        String[] authElements = header.split(" ");
+        final String[] authElements = header.split(" ");
 
         if (authElements.length != 2 || !"Bearer".equals(authElements[0])) {
             SecurityContextHolder.clearContext();
-            handlerExceptionResolver.resolveException(
-                    request, response, null,
+            handlerExceptionResolver.resolveException(request, response, null,
                     new JWTVerificationException("Malformed authorization header"));
             return;
         }
 
         try {
             final String email = userAuthenticationProvider.extractEmail(authElements[1]);
-
             final UserDto user = userService.findByLogin(email);
 
             SecurityContextHolder.getContext().setAuthentication(
-                    new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList()));
+                    new UsernamePasswordAuthenticationToken(
+                            user, null, Collections.emptyList()));
+
         } catch (JWTVerificationException exception) {
             SecurityContextHolder.clearContext();
             handlerExceptionResolver.resolveException(request, response, null, exception);
             return;
         }
+
         filterChain.doFilter(request, response);
     }
 }

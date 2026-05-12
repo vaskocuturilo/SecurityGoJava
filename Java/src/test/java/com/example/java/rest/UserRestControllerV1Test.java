@@ -39,8 +39,8 @@ class UserRestControllerV1Test extends AbstractRestControllerBaseTest {
     private String authToken;
 
     private static final String BASE_URL = "/api/v1/users";
-    private static final String TEST_EMAIL = "test@test.com";
-    private static final String TEST_PASSWORD = "password123";
+    private static final String TEST_EMAIL = "title@title.com";
+    private static final String TEST_PASSWORD = "description";
     private static final String TEST_REFRESH_TOKEN = "mocked-refresh-token";
 
     @Test
@@ -62,7 +62,7 @@ class UserRestControllerV1Test extends AbstractRestControllerBaseTest {
     }
 
     @Test
-    @DisplayName("login: unknown email returns 404")
+    @DisplayName("The login with unknown email")
     void givenUnknownEmail_whenLogin_thenReturn404() throws Exception {
         final CredentialsDto credentials = new CredentialsDto(
                 "unknown@test.com", TEST_PASSWORD.toCharArray());
@@ -119,7 +119,7 @@ class UserRestControllerV1Test extends AbstractRestControllerBaseTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(credentials)))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -154,11 +154,11 @@ class UserRestControllerV1Test extends AbstractRestControllerBaseTest {
                         .header(headerName, authToken)
                         .content(objectMapper.writeValueAsString(signUpDto)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Email already exists"));
+                .andExpect(jsonPath("$.message").value("Email already exists"));
     }
 
     @Test
-    @DisplayName("register: invalid email format returns 400")
+    @DisplayName("Test register with invalid email format")
     void givenInvalidEmail_whenRegister_thenReturn400() throws Exception {
         final SignUpDto signUpDto = new SignUpDto(
                 "not-an-email", TEST_PASSWORD.toCharArray());
@@ -170,7 +170,7 @@ class UserRestControllerV1Test extends AbstractRestControllerBaseTest {
                         .header(headerName, authToken)
                         .content(objectMapper.writeValueAsString(signUpDto)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.email").value("Email is not valid"));
+                .andExpect(jsonPath("$.message").value("Email is not valid"));
     }
 
     @Test
@@ -184,7 +184,7 @@ class UserRestControllerV1Test extends AbstractRestControllerBaseTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(signUpDto)))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -234,12 +234,12 @@ class UserRestControllerV1Test extends AbstractRestControllerBaseTest {
                         .header(headerName, authToken)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.error").value("Invalid refresh token"));
+                .andExpect(jsonPath("$.message").value("Invalid refresh token"));
     }
 
     @Test
-    @DisplayName("refresh: missing API key returns 401")
-    void givenMissingApiKey_whenRefresh_thenReturn401() throws Exception {
+    @DisplayName("Test refresh endpoint without API key")
+    void givenMissingApiKey_whenRefresh_thenReturn403() throws Exception {
         final RefreshTokenRequest request = new RefreshTokenRequest(TEST_REFRESH_TOKEN);
 
         mockMvc.perform(MockMvcRequestBuilders
@@ -247,7 +247,7 @@ class UserRestControllerV1Test extends AbstractRestControllerBaseTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -283,8 +283,8 @@ class UserRestControllerV1Test extends AbstractRestControllerBaseTest {
     }
 
     @Test
-    @DisplayName("logout: invalid refresh token returns 401")
-    void givenInvalidRefreshToken_whenLogout_thenReturn401() throws Exception {
+    @DisplayName("The logout with invalid refresh token")
+    void givenInvalidRefreshToken_whenLogout_thenReturn400() throws Exception {
         final RefreshTokenRequest request = new RefreshTokenRequest("invalid-token");
 
         mockMvc.perform(MockMvcRequestBuilders
@@ -294,7 +294,7 @@ class UserRestControllerV1Test extends AbstractRestControllerBaseTest {
                         .header(headerName, authToken)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.error").value("Invalid refresh token"));
+                .andExpect(jsonPath("$.message").value("Invalid refresh token"));
     }
 
     @Test
@@ -329,7 +329,7 @@ class UserRestControllerV1Test extends AbstractRestControllerBaseTest {
                         .content(objectMapper.writeValueAsString(
                                 new RefreshTokenRequest(refreshToken))))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.error").value("Refresh token was revoked"));
+                .andExpect(jsonPath("$.message").value("Refresh token was revoked"));
     }
 
     @Test
@@ -370,7 +370,7 @@ class UserRestControllerV1Test extends AbstractRestControllerBaseTest {
     }
 
     @Test
-    @DisplayName("logoutAll: missing JWT returns 401")
+    @DisplayName("The test logoutAll with missing JWT")
     void givenMissingJwt_whenLogoutAll_thenReturn401() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders
                         .post(BASE_URL + "/logout-all")

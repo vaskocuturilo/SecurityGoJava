@@ -1,6 +1,5 @@
 package com.example.java.config.filter;
 
-import com.example.java.config.path.SecurityConstants;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,7 +14,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.util.Arrays;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -23,12 +21,6 @@ public class APIKeyAuthFilter extends OncePerRequestFilter {
 
     private final String principalRequestHeader;
     private final String principalRequestValue;
-
-    @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        final String path = request.getRequestURI();
-        return Arrays.stream(SecurityConstants.PUBLIC_ROUTES).anyMatch(path::startsWith);
-    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,

@@ -2,11 +2,13 @@ package com.example.java.rest;
 
 
 import com.example.java.dto.*;
+import com.example.java.exception.UserException;
 import com.example.java.service.IUserService;
 import com.example.java.service.RefreshTokenService;
 import jakarta.validation.Valid;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -51,6 +53,9 @@ public class UserRestControllerV1 {
 
     @PostMapping("/logout-all")
     public ResponseEntity<@NonNull Void> logoutAll(@AuthenticationPrincipal UserDto user) {
+        if (user == null) {
+            throw new UserException("Authentication required", HttpStatus.UNAUTHORIZED);
+        }
         userService.logoutAll(user.email());
 
         return ResponseEntity.ok().build();
