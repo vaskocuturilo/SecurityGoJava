@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"errors"
 	"golang/auth"
 	"golang/internal/config"
+	"golang/migrations"
 	"log/slog"
 	"net"
 	"net/http"
@@ -14,6 +17,32 @@ import (
 
 func main() {
 	cfg := config.Load()
+
+	db, err := sql.Open("postgres", cfg.Postgres.ConnString())
+
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			slog.Warn("Failed to init Postgres: ", "error", err)
+		}
+	}(db)
+
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.Server.DBTimeout)
+	defer cancel()
+
+	if err := db.PingContext(ctx); err != nil {
+		slog.Warn("Postgres is not ready: ", "error", err)
+	} else {
+		slog.Info("Postgres is ready")
+	}
+
+	err = migrations.RunMigrations(db)
+
+	if err != nil {
+		slog.Warn("Failed to init migration process: ", "error", err)
+	} else {
+		slog.Info("Successfully init migration process")
+	}
 
 	mux := http.NewServeMux()
 
