@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"net"
 	"os"
 	"time"
 
@@ -11,7 +10,6 @@ import (
 
 type Config struct {
 	Postgres PostgresConfig
-	Redis    RedisConfig
 	Server   ServerConfig
 	JWT      JWTConfig
 }
@@ -22,12 +20,6 @@ type PostgresConfig struct {
 	User     string
 	Password string
 	DBName   string
-}
-
-type RedisConfig struct {
-	Addr     string
-	Password string
-	DB       int
 }
 
 type ServerConfig struct {
@@ -52,12 +44,9 @@ func Load() *Config {
 			Port:     getEnv("POSTGRES_PORT", "5432"),
 			User:     getEnv("POSTGRES_USER", "postgres"),
 			Password: os.Getenv("POSTGRES_PASSWORD"),
-			DBName:   getEnv("POSTGRES_DB", "events_db"),
+			DBName:   getEnv("POSTGRES_DB", "tasks_db"),
 		},
-		Redis: RedisConfig{
-			Addr:     net.JoinHostPort(getEnv("REDIS_HOST", "localhost"), getEnv("REDIS_PORT", "6379")),
-			Password: os.Getenv("REDIS_PASSWORD"),
-		},
+
 		Server: ServerConfig{
 			Host:           getEnv("SERVER_HOST", "0.0.0.0"),
 			Port:           getEnv("SERVER_PORT", "8080"),
