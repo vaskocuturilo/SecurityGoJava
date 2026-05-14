@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"golang/app"
 	"golang/auth"
 	"golang/internal/config"
 	"golang/migrations"
@@ -46,12 +47,12 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("POST /auth/register", auth.Register)
-	mux.HandleFunc("POST /auth/login", auth.Login)
-	mux.HandleFunc("POST /auth/refresh", auth.Refresh)
-	mux.HandleFunc("GET /tasks", tasks)
+	mux.HandleFunc("POST /api/v1/auth/register", auth.Register)
+	mux.HandleFunc("POST /api/v1/auth/login", auth.Login)
+	mux.HandleFunc("POST /api/v1/auth/refresh", auth.Refresh)
+	mux.HandleFunc("GET /api/v1/tasks", app.Tasks)
 
-	srv := http.Server{Addr: net.JoinHostPort(cfg.Server.Host, cfg.Server.Port)}
+	srv := http.Server{Addr: net.JoinHostPort(cfg.Server.Host, cfg.Server.Port), Handler: mux}
 
 	go func() {
 		slog.Info("Server is starting on port", "port", cfg.Server.Port)
@@ -65,8 +66,4 @@ func main() {
 
 	<-quit
 	slog.Info("Shutdown signal received, shutting down gracefully...")
-}
-
-func tasks(w http.ResponseWriter, r *http.Request) {
-	//TODO: add tasks functionality.
 }

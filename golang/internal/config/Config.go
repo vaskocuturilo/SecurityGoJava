@@ -43,7 +43,7 @@ func Load() *Config {
 			Host:     getEnv("POSTGRES_HOST", "localhost"),
 			Port:     getEnv("POSTGRES_PORT", "5432"),
 			User:     getEnv("POSTGRES_USER", "postgres"),
-			Password: os.Getenv("POSTGRES_PASSWORD"),
+			Password: getEnv("POSTGRES_PASSWORD", "postgres"),
 			DBName:   getEnv("POSTGRES_DB", "tasks_db"),
 		},
 
