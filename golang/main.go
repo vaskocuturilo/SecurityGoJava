@@ -8,6 +8,7 @@ import (
 	"golang/auth"
 	"golang/internal/config"
 	"golang/migrations"
+	"golang/token"
 	"log/slog"
 	"net"
 	"net/http"
@@ -50,7 +51,7 @@ func main() {
 	mux.HandleFunc("POST /api/v1/auth/register", auth.Register)
 	mux.HandleFunc("POST /api/v1/auth/login", auth.Login)
 	mux.HandleFunc("POST /api/v1/auth/refresh", auth.Refresh)
-	mux.HandleFunc("GET /api/v1/tasks", app.Tasks)
+	mux.Handle("GET /api/v1/tasks", token.Middleware(http.HandlerFunc(app.Tasks)))
 
 	srv := http.Server{Addr: net.JoinHostPort(cfg.Server.Host, cfg.Server.Port), Handler: mux}
 
