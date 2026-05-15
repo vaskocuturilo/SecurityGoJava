@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"golang/claims"
 	"golang/internal/config"
-	"golang/users"
+	"golang/model"
 	"golang/utils"
 	"log"
 	"net/http"
@@ -30,17 +30,17 @@ func init() {
 	dummyHash = h
 }
 
-func AuthUser(email, password string) (users.User, error) {
+func AuthUser(email, password string) (model.User, error) {
 	var ErrInvalidUserOrPassword = errors.New("invalid credentials")
 
 	userDB := config.UserDB()
 
-	idx := slices.IndexFunc(userDB, func(u users.User) bool {
+	idx := slices.IndexFunc(userDB, func(u model.User) bool {
 		return strings.EqualFold(email, u.Email)
 	})
 
 	var hashToCheck []byte
-	var user users.User
+	var user model.User
 
 	if idx == -1 {
 		hashToCheck = dummyHash
@@ -52,27 +52,26 @@ func AuthUser(email, password string) (users.User, error) {
 	err := checkPassword(hashToCheck, password)
 
 	if idx == -1 || err != nil {
-		return users.User{}, ErrInvalidUserOrPassword
+		return model.User{}, ErrInvalidUserOrPassword
 	}
 
 	return user, nil
 }
 
-func CreateAccessToken(u users.User) (string, error) {
+func CreateAccessToken(u model.User) (string, error) {
 	secret := config.JWTSecret()
 	issuer := config.GetIssuer()
 
 	tokenID := uuid.New().String()
 
 	var mapClaims = jwt.MapClaims{
-		"iss":           issuer,
-		"sub":           u.ID,
-		"jti":           tokenID,
-		"nbf":           time.Now().Unix(),
-		"iat":           time.Now().Unix(),
-		"exp":           time.Now().Add(config.AccessTokenDuration()).Unix(),
-		"user_name":     u.Name,
-		"user_lastname": u.Lastname,
+		"iss":       issuer,
+		"sub":       u.ID,
+		"jti":       tokenID,
+		"nbf":       time.Now().Unix(),
+		"iat":       time.Now().Unix(),
+		"exp":       time.Now().Add(config.AccessTokenDuration()).Unix(),
+		"user_name": u.Name,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, mapClaims)
@@ -90,8 +89,8 @@ func checkPassword(hashedPassword []byte, password string) error {
 	return bcrypt.CompareHashAndPassword(hashedPassword, []byte(password))
 }
 
-func GetUserFromContext(ctx context.Context) (users.User, bool) {
-	u, ok := ctx.Value(userContextKey).(users.User)
+func GetUserFromContext(ctx context.Context) (model.User, bool) {
+	u, ok := ctx.Value(userContextKey).(model.User)
 	return u, ok
 }
 
@@ -120,7 +119,7 @@ func Middleware(next http.Handler) http.Handler {
 	})
 }
 
-func VerifyAccessToken(accessToken string) (users.User, error) {
+func VerifyAccessToken(accessToken string) (model.User, error) {
 	c := &claims.UserClaims{}
 
 	parseToken, err := jwt.ParseWithClaims(
@@ -133,20 +132,19 @@ func VerifyAccessToken(accessToken string) (users.User, error) {
 	)
 
 	if err != nil {
-		return users.User{}, fmt.Errorf("token validation failed: %w", err)
+		return model.User{}, fmt.Errorf("token validation failed: %w", err)
 	}
 
 	if !parseToken.Valid {
-		return users.User{}, errors.New("invalid token")
+		return model.User{}, errors.New("invalid token")
 	}
 
-	return users.User{
-		Name:     c.Subject,
-		Lastname: c.Lastname,
-		Email:    c.Email,
+	return model.User{
+		Name:  c.Subject,
+		Email: c.Email,
 	}, nil
 }
 
-func putUserToContext(ctx context.Context, u users.User) context.Context {
+func putUserToContext(ctx context.Context, u model.User) context.Context {
 	return context.WithValue(ctx, userContextKey, u)
 }

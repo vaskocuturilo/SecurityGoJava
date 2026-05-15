@@ -5,9 +5,11 @@ import (
 	"database/sql"
 	"errors"
 	"golang/app"
-	"golang/auth"
+	"golang/controller"
 	"golang/internal/config"
 	"golang/migrations"
+	"golang/repository"
+	"golang/service"
 	"golang/token"
 	"log/slog"
 	"net"
@@ -46,11 +48,17 @@ func main() {
 		slog.Info("Successfully init migration process")
 	}
 
+	repo := repository.NewPostgresUserRepository(db)
+
+	serv := service.NewUserService(repo)
+
+	ctrl := controller.NewEventController(serv)
+
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("POST /api/v1/auth/register", auth.Register)
-	mux.HandleFunc("POST /api/v1/auth/login", auth.Login)
-	mux.HandleFunc("POST /api/v1/auth/refresh", auth.Refresh)
+	mux.HandleFunc("POST /api/v1/auth/register", ctrl.SignUp)
+	mux.HandleFunc("POST /api/v1/auth/login", ctrl.Login)
+	mux.HandleFunc("POST /api/v1/auth/refresh", ctrl.Refresh)
 	mux.Handle("GET /api/v1/tasks", token.Middleware(http.HandlerFunc(app.Tasks)))
 
 	srv := http.Server{Addr: net.JoinHostPort(cfg.Server.Host, cfg.Server.Port), Handler: mux}

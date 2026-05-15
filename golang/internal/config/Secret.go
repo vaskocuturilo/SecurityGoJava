@@ -1,7 +1,7 @@
 package config
 
 import (
-	"golang/users"
+	"golang/model"
 	"os"
 	"time"
 
@@ -16,7 +16,7 @@ func JWTSecret() []byte {
 	return jwtSecretKey
 }
 
-func UserDB() []users.User {
+func UserDB() []model.User {
 	return usersDB
 }
 
@@ -33,16 +33,14 @@ func AccessTokenDuration() time.Duration {
 	return time.Duration(time.Now().Add(15 * time.Minute).Unix())
 }
 
-var usersDB = []users.User{
+var usersDB = []model.User{
 	{
 		Name:           "John",
-		Lastname:       "Doe",
 		Email:          "john.doe@test.com",
 		HashedPassword: hashPassword("john.doe.password"),
 	},
 	{
 		Name:           "Jane",
-		Lastname:       "Doe",
 		Email:          "jane.doe@test.com",
 		HashedPassword: hashPassword("jane.doe.password"),
 	},
