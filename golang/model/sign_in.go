@@ -1,6 +1,6 @@
-package users
+package model
 
-type SignUp struct {
+type SignIn struct {
 	UserName string `json:"userName"`
 	Password []byte `json:"password"`
 }

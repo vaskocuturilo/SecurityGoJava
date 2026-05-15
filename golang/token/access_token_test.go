@@ -2,17 +2,17 @@ package token
 
 import (
 	"golang/internal/config"
-	"golang/users"
+	"golang/model"
 	"testing"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
 func TestCreateAccessToken(t *testing.T) {
-	mockUser := users.User{
-		ID:       "f47ac10b-58cc-4372-a567",
-		Name:     "John",
-		Lastname: "Doe",
+	mockUser := model.User{
+		ID:    "f47ac10b-58cc-4372-a567",
+		Name:  "John",
+		Email: "Doe@doe.com",
 	}
 
 	tokenString, err := CreateAccessToken(mockUser)
