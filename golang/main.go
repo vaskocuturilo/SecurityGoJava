@@ -52,7 +52,7 @@ func main() {
 
 	serv := service.NewUserService(repo)
 
-	ctrl := controller.NewEventController(serv)
+	ctrl := controller.NewUserController(serv)
 
 	mux := http.NewServeMux()
 
@@ -75,4 +75,5 @@ func main() {
 
 	<-quit
 	slog.Info("Shutdown signal received, shutting down gracefully...")
+	srv.Shutdown(ctx)
 }

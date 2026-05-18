@@ -26,7 +26,7 @@ type contextKey string
 const userContextKey = contextKey("user")
 
 func init() {
-	h, _ := bcrypt.GenerateFromPassword([]byte("static-dummy-password"), bcrypt.DefaultCost)
+	h, _ := config.HashPassword("static-dummy-password")
 	dummyHash = h
 }
 
@@ -46,7 +46,7 @@ func AuthUser(email, password string) (model.User, error) {
 		hashToCheck = dummyHash
 	} else {
 		user = userDB[idx]
-		hashToCheck = user.HashedPassword
+		hashToCheck = []byte(user.HashedPassword)
 	}
 
 	err := checkPassword(hashToCheck, password)
@@ -71,7 +71,7 @@ func CreateAccessToken(u model.User) (string, error) {
 		"nbf":       time.Now().Unix(),
 		"iat":       time.Now().Unix(),
 		"exp":       time.Now().Add(config.AccessTokenDuration()).Unix(),
-		"user_name": u.Name,
+		"user_name": u.Username,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, mapClaims)
@@ -140,8 +140,8 @@ func VerifyAccessToken(accessToken string) (model.User, error) {
 	}
 
 	return model.User{
-		Name:  c.Subject,
-		Email: c.Email,
+		Username: c.Subject,
+		Email:    c.Email,
 	}, nil
 }
 

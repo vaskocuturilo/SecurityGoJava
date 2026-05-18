@@ -24,9 +24,9 @@ func GetIssuer() string {
 	return issuer
 }
 
-func hashPassword(password string) []byte {
+func HashPassword(password string) ([]byte, error) {
 	hash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	return hash
+	return hash, nil
 }
 
 func AccessTokenDuration() time.Duration {
@@ -35,13 +35,13 @@ func AccessTokenDuration() time.Duration {
 
 var usersDB = []model.User{
 	{
-		Name:           "John",
+		Username:       "John",
 		Email:          "john.doe@test.com",
-		HashedPassword: hashPassword("john.doe.password"),
+		HashedPassword: "john.doe.password",
 	},
 	{
-		Name:           "Jane",
+		Username:       "Jane",
 		Email:          "jane.doe@test.com",
-		HashedPassword: hashPassword("jane.doe.password"),
+		HashedPassword: "jane.doe.password",
 	},
 }

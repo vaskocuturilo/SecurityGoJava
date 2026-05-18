@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"golang/model"
 	"golang/service"
 	"golang/token"
@@ -13,54 +12,35 @@ import (
 	"strings"
 )
 
-const (
-	userNotFound        = "User not found"
-	notFound            = "Not found with ID"
-	unexpected          = "Unexpected error"
-	invalidUrl          = "Invalid ID in URL"
-	internalServerError = "Internal server error"
-)
-
 type UserController struct {
 	service service.IUserService
 }
 
-func NewEventController(service service.IUserService) *UserController {
+func NewUserController(service service.IUserService) *UserController {
 	return &UserController{service: service}
 }
 
 func (c *UserController) SignUp(w http.ResponseWriter, r *http.Request) {
-	var credential model.Credential
+	var credentials model.Credential
 
-	if err := json.NewDecoder(r.Body).Decode(&credential); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
 		slog.Info("Decode payload error", "error", err)
-		http.Error(w, "Failed to Decode payload", http.StatusBadRequest)
+		http.Error(w, "Invalid payload", http.StatusBadRequest)
 		return
 	}
 
-	ctx := r.Context()
-
-	newEvent := model.NewUser(credential.UserName, credential.UserName, credential.Password)
-
-	err := c.service.Login(ctx, newEvent)
+	err := c.service.SignUp(r.Context(), &credentials)
 
 	if err != nil {
-		switch {
-		case errors.Is(err, model.ErrInvalidInput):
-			http.Error(w, err.Error(), http.StatusBadRequest)
-		case errors.Is(err, model.ErrAlreadyExists):
-			http.Error(w, "Event ID already taken", http.StatusConflict)
-		default:
-			slog.Error(unexpected, "error", err)
-			http.Error(w, internalServerError, http.StatusInternalServerError)
+		if errors.Is(err, model.ErrAlreadyExists) {
+			http.Error(w, "User already exists", http.StatusConflict)
+			return
 		}
+		http.Error(w, "Internal error", http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Location", fmt.Sprintf("/events/%s", newEvent.ID))
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(newEvent)
 }
 
 func (c *UserController) Login(w http.ResponseWriter, r *http.Request) {
