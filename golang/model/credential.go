@@ -1,26 +1,32 @@
 package model
 
-import "errors"
+import (
+	"errors"
+	"strings"
+)
 
 type Credential struct {
-	UserName string `json:"userName"`
-	Password []byte `json:"password"`
+	UserName string `json:"username"`
+	Password string `json:"password"`
 }
 
 var (
 	ErrUsernameRequired = errors.New("username required")
 	ErrPasswordRequired = errors.New("password required")
-	ErrInvalidInput     = errors.New("invalid input data")
-	ErrAlreadyExists    = errors.New("event already exists")
+	ErrPasswordTooShort = errors.New("password must be at least 8 characters")
 )
 
 func (c *Credential) Validate() error {
-	if c.UserName == "" {
+	if strings.TrimSpace(c.UserName) == "" {
 		return ErrUsernameRequired
 	}
 
-	if len(c.Password) == 0 {
+	if strings.TrimSpace(c.Password) == "" {
 		return ErrPasswordRequired
+	}
+
+	if len(c.Password) < 8 {
+		return ErrPasswordTooShort
 	}
 
 	return nil

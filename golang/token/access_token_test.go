@@ -10,9 +10,9 @@ import (
 
 func TestCreateAccessToken(t *testing.T) {
 	mockUser := model.User{
-		ID:    "f47ac10b-58cc-4372-a567",
-		Name:  "John",
-		Email: "Doe@doe.com",
+		ID:       "f47ac10b-58cc-4372-a567",
+		Username: "John",
+		Email:    "Doe@doe.com",
 	}
 
 	tokenString, err := CreateAccessToken(mockUser)

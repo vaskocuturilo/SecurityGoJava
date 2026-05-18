@@ -1,19 +1,18 @@
 package model
 
-import "github.com/google/uuid"
+import (
+	"errors"
+)
 
 type User struct {
 	ID             string `json:"id"`
-	Name           string `json:"name"`
+	Username       string `json:"username"`
 	Email          string `json:"email"`
-	HashedPassword []byte `json:"hashed-password"`
+	HashedPassword string `json:"-"`
 }
 
-func NewUser(username, email string, hashedPassword []byte) *User {
-	return &User{
-		ID:             uuid.New().String(),
-		Name:           username,
-		Email:          email,
-		HashedPassword: hashedPassword,
-	}
-}
+var (
+	ErrUserNotFound       = errors.New("user not found")
+	ErrInvalidCredentials = errors.New("invalid credentials")
+	ErrAlreadyExists      = errors.New("user already exists")
+)
