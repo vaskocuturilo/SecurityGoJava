@@ -89,11 +89,6 @@ func checkPassword(hashedPassword []byte, password string) error {
 	return bcrypt.CompareHashAndPassword(hashedPassword, []byte(password))
 }
 
-func GetUserFromContext(ctx context.Context) (model.User, bool) {
-	u, ok := ctx.Value(userContextKey).(model.User)
-	return u, ok
-}
-
 func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
