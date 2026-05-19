@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"golang/model"
@@ -9,7 +8,6 @@ import (
 	"golang/token"
 	"log/slog"
 	"net/http"
-	"strings"
 )
 
 type UserController struct {
@@ -44,55 +42,29 @@ func (c *UserController) SignUp(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *UserController) Login(w http.ResponseWriter, r *http.Request) {
-	authHeader := r.Header.Get("Authorization")
+	username, password, ok := r.BasicAuth()
 
-	const basicAuthPrefix = "Basic "
-
-	if authHeader == "" || !strings.HasPrefix(authHeader, basicAuthPrefix) {
+	if !ok {
 		w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	payload, err := base64.StdEncoding.DecodeString(authHeader[len(basicAuthPrefix):])
+	user, err := c.service.Login(r.Context(), username, password)
 
 	if err != nil {
-		http.Error(w, "Invalid Authorization header", http.StatusBadRequest)
+		http.Error(w, "Invalid username or password", http.StatusUnauthorized)
 		return
 	}
 
-	creds := strings.SplitN(string(payload), ":", 2)
-
-	if len(creds) != 2 {
-		http.Error(w, "Invalid Authorization header", http.StatusBadRequest)
-		return
-	}
-
-	user, err := token.AuthUser(creds[0], creds[1])
-
+	accessToken, err := token.CreateAccessToken(*user)
 	if err != nil {
-		w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-
-	accessToken, err := token.CreateAccessToken(user)
-	if err != nil {
+		slog.Error("JWT creation failed", "error", err)
 		http.Error(w, "Internal error", http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-
-	type response struct {
-		AccessToken string `json:"access_token"`
-	}
-
-	err = json.NewEncoder(w).Encode(response{AccessToken: accessToken})
-	if err != nil {
-		return
-	}
+	json.NewEncoder(w).Encode(map[string]string{"access_token": accessToken})
 }
 
 func (c *UserController) Refresh(w http.ResponseWriter, r *http.Request) {

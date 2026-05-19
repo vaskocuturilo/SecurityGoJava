@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type PostgresUserRepository struct {
@@ -46,14 +45,13 @@ func (r *PostgresUserRepository) SignUp(ctx context.Context, credential *model.C
 	return err
 }
 
-func (r *PostgresUserRepository) Login(ctx context.Context, username, password string) (*model.User, error) {
-	var user model.User
+func (r *PostgresUserRepository) GetByEmail(ctx context.Context, email string) (*model.User, error) {
+	query := `SELECT id, username, email, password FROM users_db WHERE email = $1`
+
+	var u model.User
 	var hashedPwd string
 
-	query := `SELECT id, username, password FROM users_db WHERE username = $1`
-
-	err := r.db.QueryRowContext(ctx, query, username).Scan(&user.ID, &user.Username, &hashedPwd)
-
+	err := r.db.QueryRowContext(ctx, query, email).Scan(&u.ID, &u.Username, &u.Email, &hashedPwd)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, model.ErrUserNotFound
@@ -61,13 +59,8 @@ func (r *PostgresUserRepository) Login(ctx context.Context, username, password s
 		return nil, err
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(hashedPwd), []byte(password))
-
-	if err != nil {
-		return nil, model.ErrInvalidCredentials
-	}
-
-	return &user, nil
+	u.HashedPassword = hashedPwd
+	return &u, nil
 }
 
 func (r *PostgresUserRepository) Refresh(ctx context.Context, request *model.RefreshRequest) error {
