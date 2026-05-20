@@ -1,7 +1,6 @@
 CREATE TABLE IF NOT EXISTS users_db
 (
     id         VARCHAR(36)  NOT NULL,
-    username   varchar(255) NOT NULL,
     email      varchar(255) NOT NULL,
     password   varchar(255) NOT NULL,
     enabled    BOOLEAN      NOT NULL DEFAULT FALSE,

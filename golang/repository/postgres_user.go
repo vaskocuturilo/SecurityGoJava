@@ -4,8 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
-	"golang/internal/config"
 	"golang/model"
 	"time"
 
@@ -22,22 +20,15 @@ func NewPostgresUserRepository(db *sql.DB) *PostgresUserRepository {
 
 func (r *PostgresUserRepository) SignUp(ctx context.Context, credential *model.Credential) error {
 
-	hashedPassword, err := config.HashPassword(credential.Password)
-
-	if err != nil {
-		return fmt.Errorf("failed to hash password: %w", err)
-	}
-
 	query := `
-        INSERT INTO users_db (id, username, email, password, enabled, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        INSERT INTO users_db (id, email, password, enabled, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6)
     `
 
-	_, err = r.db.ExecContext(ctx, query,
+	_, err := r.db.ExecContext(ctx, query,
 		uuid.New(),
-		credential.UserName,
-		credential.UserName,
-		string(hashedPassword),
+		credential.Email,
+		credential.Password,
 		true,
 		time.Now().UTC().UnixMilli(),
 		time.Now().UTC().UnixMilli(),
@@ -46,12 +37,12 @@ func (r *PostgresUserRepository) SignUp(ctx context.Context, credential *model.C
 }
 
 func (r *PostgresUserRepository) GetByEmail(ctx context.Context, email string) (*model.User, error) {
-	query := `SELECT id, username, email, password FROM users_db WHERE email = $1`
+	query := `SELECT id, email, password FROM users_db WHERE email = $1`
 
 	var u model.User
 	var hashedPwd string
 
-	err := r.db.QueryRowContext(ctx, query, email).Scan(&u.ID, &u.Username, &u.Email, &hashedPwd)
+	err := r.db.QueryRowContext(ctx, query, email).Scan(&u.ID, &u.Email, &hashedPwd)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, model.ErrUserNotFound

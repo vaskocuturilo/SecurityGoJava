@@ -6,19 +6,19 @@ import (
 )
 
 type Credential struct {
-	UserName string `json:"username"`
+	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
 var (
-	ErrUsernameRequired = errors.New("username required")
+	ErrEmailRequired    = errors.New("email required")
 	ErrPasswordRequired = errors.New("password required")
 	ErrPasswordTooShort = errors.New("password must be at least 8 characters")
 )
 
 func (c *Credential) Validate() error {
-	if strings.TrimSpace(c.UserName) == "" {
-		return ErrUsernameRequired
+	if strings.TrimSpace(c.Email) == "" {
+		return ErrEmailRequired
 	}
 
 	if strings.TrimSpace(c.Password) == "" {
