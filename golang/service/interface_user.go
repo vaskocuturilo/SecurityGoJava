@@ -7,6 +7,6 @@ import (
 
 type IUserService interface {
 	SignUp(ctx context.Context, credential *model.Credential) error
-	Login(ctx context.Context, username, password string) (*model.User, error)
+	Login(ctx context.Context, email, password string) (*model.User, error)
 	Refresh(ctx context.Context, request *model.RefreshRequest) error
 }

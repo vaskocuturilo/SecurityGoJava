@@ -75,5 +75,13 @@ func main() {
 
 	<-quit
 	slog.Info("Shutdown signal received, shutting down gracefully...")
-	srv.Shutdown(ctx)
+
+	ctx, cancel = context.WithTimeout(context.Background(), cfg.Server.TTL)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		slog.Warn("Server forced to shutdown: ", "error", err)
+	}
+
+	slog.Info("Server exited properly")
 }

@@ -42,7 +42,7 @@ func (c *UserController) SignUp(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *UserController) Login(w http.ResponseWriter, r *http.Request) {
-	username, password, ok := r.BasicAuth()
+	email, password, ok := r.BasicAuth()
 
 	if !ok {
 		w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
@@ -50,10 +50,10 @@ func (c *UserController) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := c.service.Login(r.Context(), username, password)
+	user, err := c.service.Login(r.Context(), email, password)
 
 	if err != nil {
-		http.Error(w, "Invalid username or password", http.StatusUnauthorized)
+		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
 		return
 	}
 
