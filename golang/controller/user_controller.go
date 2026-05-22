@@ -27,6 +27,12 @@ func (c *UserController) SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := credentials.Validate(); err != nil {
+		slog.Info("Invalid Data", "error", err)
+		http.Error(w, "Invalid Data", http.StatusBadRequest)
+		return
+	}
+
 	err := c.service.SignUp(r.Context(), &credentials)
 
 	if err != nil {
