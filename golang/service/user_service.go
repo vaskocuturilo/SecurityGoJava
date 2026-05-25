@@ -10,11 +10,12 @@ import (
 )
 
 type UserService struct {
-	repo repository.UserRepository
+	repo         repository.UserRepository
+	tokenManager ITokenManager
 }
 
-func NewUserService(repo repository.UserRepository) *UserService {
-	return &UserService{repo: repo}
+func NewUserService(repo repository.UserRepository, tm ITokenManager) *UserService {
+	return &UserService{repo: repo, tokenManager: tm}
 }
 
 func (s *UserService) SignUp(ctx context.Context, credential *model.Credential) error {
@@ -49,6 +50,25 @@ func (s *UserService) Login(ctx context.Context, email, password string) (*model
 	return user, nil
 }
 
-func (s *UserService) Refresh(ctx context.Context, request *model.RefreshRequest) error {
-	return nil
+func (s *UserService) Refresh(ctx context.Context, refreshToken string) (string, string, error) {
+	user, err := s.tokenManager.VerifyRefreshToken(refreshToken)
+
+	if err != nil {
+		return "", "", err
+	}
+
+	newAccess, err := s.tokenManager.CreateAccessToken(&user)
+
+	if err != nil {
+		return "", "", err
+	}
+
+	newRefresh, err := s.tokenManager.CreateRefreshToken(user)
+
+	if err != nil {
+		return "", "", err
+	}
+
+	return newAccess, newRefresh, nil
+
 }

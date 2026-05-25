@@ -74,5 +74,24 @@ func (c *UserController) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *UserController) Refresh(w http.ResponseWriter, r *http.Request) {
-	//TODO: refresh functionality
+	var req model.RefreshRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.RefreshToken == "" {
+		http.Error(w, "Invalid body", http.StatusBadRequest)
+		return
+	}
+
+	newAccess, newRefresh, err := c.service.Refresh(r.Context(), req.RefreshToken)
+
+	if err != nil {
+		http.Error(w, "Unauthorized or invalid token", http.StatusUnauthorized)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	json.NewEncoder(w).Encode(model.RefreshResponse{
+		AccessToken:  newAccess,
+		RefreshToken: newRefresh,
+	})
 }

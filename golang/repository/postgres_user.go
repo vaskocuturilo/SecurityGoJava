@@ -54,6 +54,6 @@ func (r *PostgresUserRepository) GetByEmail(ctx context.Context, email string) (
 	return &u, nil
 }
 
-func (r *PostgresUserRepository) Refresh(ctx context.Context, request *model.RefreshRequest) error {
-	return errors.New("not implemented")
+func (r *PostgresUserRepository) Refresh(ctx context.Context, refreshToken string) (string, string, error) {
+	return "", "", errors.New("not implemented")
 }

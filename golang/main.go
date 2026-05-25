@@ -50,7 +50,9 @@ func main() {
 
 	repo := repository.NewPostgresUserRepository(db)
 
-	serv := service.NewUserService(repo)
+	tokenMgr := token.NewTokenManager(repo)
+
+	serv := service.NewUserService(repo, tokenMgr)
 
 	ctrl := controller.NewUserController(serv)
 
