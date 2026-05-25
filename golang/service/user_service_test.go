@@ -12,7 +12,13 @@ import (
 type MockRepository struct {
 	SignUpFunc     func(ctx context.Context, credential *model.Credential) error
 	GetByEmailFunc func(ctx context.Context, email string) (*model.User, error)
-	RefreshFunc    func(ctx context.Context, request *model.RefreshRequest) error
+	RefreshFunc    func(ctx context.Context, refreshToken string) (string, string, error)
+}
+
+type MockTokenManager struct {
+	CreateAccessTokenFunc  func(user *model.User) (string, error)
+	CreateRefreshTokenFunc func(u model.User) (string, error)
+	VerifyRefreshTokenFunc func(refreshToken string) (model.User, error)
 }
 
 func (m *MockRepository) SignUp(ctx context.Context, credential *model.Credential) error {
@@ -29,14 +35,26 @@ func (m *MockRepository) GetByEmail(ctx context.Context, email string) (*model.U
 	return nil, nil
 }
 
-func (m *MockRepository) Refresh(ctx context.Context, request *model.RefreshRequest) error {
+func (m *MockRepository) Refresh(ctx context.Context, refreshToken string) (string, string, error) {
 	if m.RefreshFunc != nil {
-		return m.RefreshFunc(ctx, request)
+		return m.RefreshFunc(ctx, refreshToken)
 	}
-	return nil
+	return "", "", nil
+}
+
+func (m *MockTokenManager) CreateAccessToken(u *model.User) (string, error) {
+	return m.CreateAccessTokenFunc(u)
+}
+func (m *MockTokenManager) CreateRefreshToken(u model.User) (string, error) {
+	return m.CreateRefreshTokenFunc(u)
+}
+func (m *MockTokenManager) VerifyRefreshToken(token string) (model.User, error) {
+	return m.VerifyRefreshTokenFunc(token)
 }
 
 func TestUserService_SignUp_TableDriven(t *testing.T) {
+	mockTM := &MockTokenManager{}
+
 	type testCase struct {
 		name         string
 		giveEmail    string
@@ -93,7 +111,7 @@ func TestUserService_SignUp_TableDriven(t *testing.T) {
 				},
 			}
 
-			serv := NewUserService(mockRepo)
+			serv := NewUserService(mockRepo, mockTM)
 			user := &model.Credential{Email: tc.giveEmail, Password: tc.givePassword}
 
 			// Act
@@ -108,6 +126,7 @@ func TestUserService_SignUp_TableDriven(t *testing.T) {
 }
 
 func TestUserService_Login_TableDriven(t *testing.T) {
+	mockTM := &MockTokenManager{}
 	correctPassword := "super-secret-password"
 	wrongPassword := "wrong-password"
 
@@ -178,7 +197,7 @@ func TestUserService_Login_TableDriven(t *testing.T) {
 				},
 			}
 
-			serv := NewUserService(mockRepo)
+			serv := NewUserService(mockRepo, mockTM)
 
 			// Act
 			result, err := serv.Login(context.Background(), tc.giveEmail, tc.givePassword)

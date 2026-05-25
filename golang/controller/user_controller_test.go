@@ -14,7 +14,7 @@ import (
 type MockUserService struct {
 	SignUpFunc  func(ctx context.Context, credential *model.Credential) error
 	LoginFunc   func(ctx context.Context, email, password string) (*model.User, error)
-	RefreshFunc func(ctx context.Context, request *model.RefreshRequest) error
+	RefreshFunc func(ctx context.Context, refreshToken string) (string, string, error)
 }
 
 func (m *MockUserService) SignUp(ctx context.Context, credential *model.Credential) error {
@@ -31,11 +31,11 @@ func (m *MockUserService) Login(ctx context.Context, email, password string) (*m
 	return nil, nil
 }
 
-func (m *MockUserService) Refresh(ctx context.Context, request *model.RefreshRequest) error {
+func (m *MockUserService) Refresh(ctx context.Context, refreshToken string) (string, string, error) {
 	if m.RefreshFunc != nil {
-		return m.RefreshFunc(ctx, request)
+		return m.RefreshFunc(ctx, refreshToken)
 	}
-	return nil
+	return "", "", nil
 }
 
 func TestUserController_SignUp_Table(t *testing.T) {
