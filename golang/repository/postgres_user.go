@@ -25,13 +25,18 @@ func (r *PostgresUserRepository) SignUp(ctx context.Context, credential *model.C
         VALUES ($1, $2, $3, $4, $5, $6)
     `
 
+	uid := uuid.New().String()
+	email := credential.Email
+	pass := credential.Password
+	now := time.Now().UTC()
+
 	_, err := r.db.ExecContext(ctx, query,
-		uuid.New(),
-		credential.Email,
-		credential.Password,
+		uid,
+		email,
+		pass,
 		true,
-		time.Now().UTC().UnixMilli(),
-		time.Now().UTC().UnixMilli(),
+		now,
+		now,
 	)
 	return err
 }
