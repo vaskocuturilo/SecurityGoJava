@@ -228,3 +228,64 @@ func TestUserService_Login_TableDriven(t *testing.T) {
 		})
 	}
 }
+
+func TestUserService_GenerateTokens(t *testing.T) {
+	mockTM := &MockTokenManager{
+		CreateAccessTokenFunc: func(user *model.User) (string, error) {
+			return "access-token", nil
+		},
+		CreateRefreshTokenFunc: func(u model.User) (string, error) {
+			return "refresh-token", nil
+		},
+	}
+
+	serv := NewUserService(nil, mockTM)
+	user := &model.User{Email: "test@test.com"}
+
+	access, refresh, err := serv.GenerateTokens(user)
+
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+	if access != "access-token" || refresh != "refresh-token" {
+		t.Errorf("Tokens mismatch: got %s, %s", access, refresh)
+	}
+}
+
+func TestUserService_Refresh(t *testing.T) {
+	mockUser := model.User{Email: "test@test.com"}
+	mockTM := &MockTokenManager{
+		VerifyRefreshTokenFunc: func(token string) (model.User, error) {
+			if token != "valid-token" {
+				return model.User{}, errors.New("invalid")
+			}
+			return mockUser, nil
+		},
+		CreateAccessTokenFunc: func(user *model.User) (string, error) {
+			return "new-access", nil
+		},
+		CreateRefreshTokenFunc: func(u model.User) (string, error) {
+			return "new-refresh", nil
+		},
+	}
+
+	serv := NewUserService(nil, mockTM)
+
+	t.Run("Success", func(t *testing.T) {
+		access, refresh, err := serv.Refresh(context.Background(), "valid-token")
+
+		if err != nil {
+			t.Errorf("Expected success, got %v", err)
+		}
+		if access != "new-access" || refresh != "new-refresh" {
+			t.Errorf("Tokens mismatch")
+		}
+	})
+
+	t.Run("Invalid Token", func(t *testing.T) {
+		_, _, err := serv.Refresh(context.Background(), "bad-token")
+		if err == nil {
+			t.Error("Expected error for bad token, got nil")
+		}
+	})
+}

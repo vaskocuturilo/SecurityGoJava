@@ -12,9 +12,10 @@ import (
 )
 
 type MockUserService struct {
-	SignUpFunc  func(ctx context.Context, credential *model.Credential) error
-	LoginFunc   func(ctx context.Context, email, password string) (*model.User, error)
-	RefreshFunc func(ctx context.Context, refreshToken string) (string, string, error)
+	SignUpFunc         func(ctx context.Context, credential *model.Credential) error
+	LoginFunc          func(ctx context.Context, email, password string) (*model.User, error)
+	RefreshFunc        func(ctx context.Context, refreshToken string) (string, string, error)
+	GenerateTokensFunc func(user *model.User) (string, string, error)
 }
 
 func (m *MockUserService) SignUp(ctx context.Context, credential *model.Credential) error {
@@ -34,6 +35,13 @@ func (m *MockUserService) Login(ctx context.Context, email, password string) (*m
 func (m *MockUserService) Refresh(ctx context.Context, refreshToken string) (string, string, error) {
 	if m.RefreshFunc != nil {
 		return m.RefreshFunc(ctx, refreshToken)
+	}
+	return "", "", nil
+}
+
+func (m *MockUserService) GenerateTokens(user *model.User) (string, string, error) {
+	if m.GenerateTokensFunc != nil {
+		return m.GenerateTokensFunc(user)
 	}
 	return "", "", nil
 }
@@ -168,6 +176,9 @@ func TestUserController_Login_Table(t *testing.T) {
 				LoginFunc: func(ctx context.Context, email, password string) (*model.User, error) {
 					return tc.wantReturn, tc.mockErr
 				},
+				GenerateTokensFunc: func(user *model.User) (string, string, error) {
+					return "access-token-val", "refresh-token-val", nil
+				},
 			}
 			ctrl := NewUserController(mockService)
 
@@ -190,10 +201,37 @@ func TestUserController_Login_Table(t *testing.T) {
 				if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil {
 					t.Fatalf("failed to unmarshal: %v", err)
 				}
-				if _, ok := response["access_token"]; !ok {
-					t.Error("expected access_token in response body")
+				if response["access_token"] != "access-token-val" {
+					t.Error("expected correct access_token")
 				}
 			}
 		})
 	}
+}
+
+func TestUserController_Refresh(t *testing.T) {
+	mockService := &MockUserService{
+		RefreshFunc: func(ctx context.Context, refreshToken string) (string, string, error) {
+			if refreshToken == "valid" {
+				return "new-access", "new-refresh", nil
+			}
+			return "", "", errors.New("invalid")
+		},
+	}
+	ctrl := NewUserController(mockService)
+
+	t.Run("Success", func(t *testing.T) {
+		body := map[string]string{"refresh_token": "valid"}
+		var buf bytes.Buffer
+		json.NewEncoder(&buf).Encode(body)
+
+		req := httptest.NewRequest(http.MethodPost, "/refresh", &buf)
+		rec := httptest.NewRecorder()
+
+		ctrl.Refresh(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Errorf("expected 200, got %d", rec.Code)
+		}
+	})
 }

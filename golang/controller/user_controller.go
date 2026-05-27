@@ -5,7 +5,6 @@ import (
 	"errors"
 	"golang/model"
 	"golang/service"
-	"golang/token"
 	"log/slog"
 	"net/http"
 )
@@ -59,18 +58,22 @@ func (c *UserController) Login(w http.ResponseWriter, r *http.Request) {
 	user, err := c.service.Login(r.Context(), email, password)
 
 	if err != nil {
-		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
+		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return
 	}
 
-	accessToken, err := token.CreateAccessToken(*user)
+	accessToken, refreshToken, err := c.service.GenerateTokens(user)
+
 	if err != nil {
 		slog.Error("JWT creation failed", "error", err)
 		http.Error(w, "Internal error", http.StatusInternalServerError)
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"access_token": accessToken})
+	json.NewEncoder(w).Encode(map[string]string{
+		"access_token":  accessToken,
+		"refresh_token": refreshToken,
+	})
 }
 
 func (c *UserController) Refresh(w http.ResponseWriter, r *http.Request) {
