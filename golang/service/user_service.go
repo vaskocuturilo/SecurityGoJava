@@ -70,5 +70,16 @@ func (s *UserService) Refresh(ctx context.Context, refreshToken string) (string,
 	}
 
 	return newAccess, newRefresh, nil
+}
 
+func (s *UserService) GenerateTokens(user *model.User) (string, string, error) {
+	access, err := s.tokenManager.CreateAccessToken(user)
+	if err != nil {
+		return "", "", err
+	}
+	refresh, err := s.tokenManager.CreateRefreshToken(*user)
+	if err != nil {
+		return "", "", err
+	}
+	return access, refresh, nil
 }

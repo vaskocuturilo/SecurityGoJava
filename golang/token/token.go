@@ -3,6 +3,7 @@ package token
 import (
 	"context"
 	"errors"
+	"fmt"
 	"golang/claims"
 	"golang/internal/config"
 	"golang/model"
@@ -28,16 +29,38 @@ type TokenManager struct {
 	refreshTokens map[string]struct{}
 }
 
-func (m *TokenManager) CreateAccessToken(user *model.User) (string, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
 func NewTokenManager(repo repository.UserRepository) *TokenManager {
 	return &TokenManager{
 		repo:          repo,
 		refreshTokens: make(map[string]struct{}),
 	}
+}
+
+func (m *TokenManager) CreateAccessToken(u *model.User) (string, error) {
+	secret := config.JWTSecret()
+	issuer := config.GetIssuer()
+
+	tokenID := uuid.New().String()
+
+	var mapClaims = jwt.MapClaims{
+		"iss":       issuer,
+		"sub":       u.ID,
+		"jti":       tokenID,
+		"nbf":       time.Now().Unix(),
+		"iat":       time.Now().Unix(),
+		"exp":       time.Now().Add(config.AccessTokenDuration()).Unix(),
+		"user_name": u.Username,
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, mapClaims)
+
+	signedToken, err := token.SignedString(secret)
+
+	if err != nil {
+		return "", fmt.Errorf("failed to sign access token: %w", err)
+	}
+
+	return signedToken, err
 }
 
 func (m *TokenManager) CreateRefreshToken(u model.User) (string, error) {
@@ -61,34 +84,33 @@ func (m *TokenManager) CreateRefreshToken(u model.User) (string, error) {
 		return "", err
 	}
 
-	mx.Lock()
-	refreshTokens[tokenID] = struct{}{}
-	mx.Unlock()
+	m.mx.Lock()
+	m.refreshTokens[tokenID] = struct{}{}
+	m.mx.Unlock()
 
 	return signed, nil
 }
 
 func (m *TokenManager) VerifyRefreshToken(refreshToken string) (model.User, error) {
-	claims := &claims.UserClaims{}
+	c := &claims.UserClaims{}
 
-	token, err := jwt.ParseWithClaims(refreshToken, claims, func(t *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(refreshToken, c, func(t *jwt.Token) (interface{}, error) {
 		return config.JWTSecret(), nil
 	})
 
-	if err != nil || !token.Valid || claims.TokenType != "refresh" {
+	if err != nil || !token.Valid || c.TokenType != "refresh" {
 		return model.User{}, ErrInvalidToken
 	}
 
 	m.mx.Lock()
-	defer m.mx.Unlock()
-
-	if _, exists := m.refreshTokens[claims.ID]; !exists {
+	if _, exists := m.refreshTokens[c.ID]; !exists {
+		m.mx.Unlock()
 		return model.User{}, ErrInvalidToken
 	}
-	delete(m.refreshTokens, claims.ID)
+	delete(m.refreshTokens, c.ID)
+	m.mx.Unlock()
 
-	userPtr, err := m.repo.GetByEmail(context.Background(), claims.Email)
-
+	userPtr, err := m.repo.GetByEmail(context.Background(), c.Subject)
 	if err != nil {
 		return model.User{}, err
 	}
@@ -98,5 +120,4 @@ func (m *TokenManager) VerifyRefreshToken(refreshToken string) (model.User, erro
 	}
 
 	return *userPtr, nil
-
 }
