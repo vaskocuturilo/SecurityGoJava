@@ -47,17 +47,26 @@ func (c *UserController) SignUp(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *UserController) Login(w http.ResponseWriter, r *http.Request) {
-	email, password, ok := r.BasicAuth()
+	defer r.Body.Close()
 
-	if !ok {
-		w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	var credentials model.Credential
+
+	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
+		slog.Info("Decode payload error", "error", err)
+		http.Error(w, "Invalid payload", http.StatusBadRequest)
 		return
 	}
 
-	user, err := c.service.Login(r.Context(), email, password)
+	if err := credentials.Validate(); err != nil {
+		slog.Info("Invalid Data", "error", err)
+		http.Error(w, "Invalid Data", http.StatusBadRequest)
+		return
+	}
+
+	user, err := c.service.Login(r.Context(), credentials.Email, credentials.Password)
 
 	if err != nil {
+		slog.Warn("Failed login attempt", "email", credentials.Email, "err", err)
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return
 	}
@@ -65,19 +74,22 @@ func (c *UserController) Login(w http.ResponseWriter, r *http.Request) {
 	accessToken, refreshToken, err := c.service.GenerateTokens(user)
 
 	if err != nil {
-		slog.Error("JWT creation failed", "error", err)
+		slog.Error("Token generation failed", "err", err)
 		http.Error(w, "Internal error", http.StatusInternalServerError)
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{
-		"access_token":  accessToken,
-		"refresh_token": refreshToken,
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	json.NewEncoder(w).Encode(model.Response{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
 	})
 }
 
 func (c *UserController) Refresh(w http.ResponseWriter, r *http.Request) {
-	var req model.RefreshRequest
+	var req model.Request
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.RefreshToken == "" {
 		http.Error(w, "Invalid body", http.StatusBadRequest)
@@ -93,7 +105,7 @@ func (c *UserController) Refresh(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	json.NewEncoder(w).Encode(model.RefreshResponse{
+	json.NewEncoder(w).Encode(model.Response{
 		AccessToken:  newAccess,
 		RefreshToken: newRefresh,
 	})
