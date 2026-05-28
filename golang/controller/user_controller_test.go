@@ -129,44 +129,46 @@ func TestUserController_Login_Table(t *testing.T) {
 	}
 
 	tests := []struct {
-		name         string
-		giveEmail    string
-		givePassword string
-		wantReturn   *model.User
-		mockErr      error
-		wantStatus   int
+		name       string
+		body       any
+		wantReturn *model.User
+		mockErr    error
+		wantStatus int
 	}{
 		{
-			name:         "Success",
-			giveEmail:    testUser.Email,
-			givePassword: testUser.HashedPassword,
-			wantReturn:   testUser,
-			mockErr:      nil,
-			wantStatus:   http.StatusOK,
+			name:       "Success",
+			body:       model.Credential{Email: "test@test.com", Password: "hashed-password"},
+			wantReturn: testUser,
+			mockErr:    nil,
+			wantStatus: http.StatusOK,
 		},
 		{
-			name:         "Validation Incorrect Email",
-			giveEmail:    "",
-			givePassword: testUser.HashedPassword,
-			wantReturn:   nil,
-			mockErr:      model.ErrEmailRequired,
-			wantStatus:   http.StatusUnauthorized,
+			name:       "Validation Incorrect Email",
+			body:       model.Credential{Email: "", Password: "hashed-password"},
+			wantReturn: nil,
+			mockErr:    model.ErrEmailRequired,
+			wantStatus: http.StatusBadRequest,
 		},
 		{
-			name:         "Validation Not Found",
-			giveEmail:    "test1@test.com",
-			givePassword: testUser.HashedPassword,
-			wantReturn:   nil,
-			mockErr:      model.ErrUserNotFound,
-			wantStatus:   http.StatusUnauthorized,
+			name:       "Validation Not Found",
+			body:       model.Credential{Email: "test1@test.com", Password: "hashed-password"},
+			wantReturn: nil,
+			mockErr:    model.ErrUserNotFound,
+			wantStatus: http.StatusUnauthorized,
 		},
 		{
-			name:         "Validation Internal Server Error",
-			giveEmail:    testUser.Email,
-			givePassword: testUser.HashedPassword,
-			wantReturn:   nil,
-			mockErr:      errors.New("something went wrong in the database"),
-			wantStatus:   http.StatusUnauthorized,
+			name:       "Validation Internal Server Error",
+			body:       model.Credential{Email: "test@test.com", Password: "hashed-password"},
+			wantReturn: nil,
+			mockErr:    errors.New("something went wrong in the database"),
+			wantStatus: http.StatusUnauthorized,
+		},
+		{
+			name:       "Validation Invalid JSON format",
+			body:       "not-a-json",
+			wantReturn: nil,
+			mockErr:    nil,
+			wantStatus: http.StatusBadRequest,
 		},
 	}
 
@@ -180,13 +182,13 @@ func TestUserController_Login_Table(t *testing.T) {
 					return "access-token-val", "refresh-token-val", nil
 				},
 			}
+
+			var buf bytes.Buffer
+			json.NewEncoder(&buf).Encode(tc.body)
+
 			ctrl := NewUserController(mockService)
 
-			req := httptest.NewRequest(http.MethodPost, "/login/", nil)
-
-			if tc.giveEmail != "" || tc.givePassword != "" {
-				req.SetBasicAuth(tc.giveEmail, tc.givePassword)
-			}
+			req := httptest.NewRequest(http.MethodPost, "/login/", &buf)
 
 			rec := httptest.NewRecorder()
 
