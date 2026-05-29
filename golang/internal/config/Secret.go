@@ -1,23 +1,30 @@
 package config
 
 import (
-	"golang/model"
 	"os"
+	"sync"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
-var jwtSecretKey = []byte(os.Getenv("SECRET_KEY"))
-
 const issuer = "example.com"
 
-func JWTSecret() []byte {
-	return jwtSecretKey
-}
+var (
+	jwtSecretKey []byte
+	once         sync.Once
+)
 
-func UserDB() []model.User {
-	return usersDB
+func JWTSecret() []byte {
+	once.Do(func() {
+		key := os.Getenv("JWT_SECRET_KEY")
+		if key == "" {
+			panic("JWT_SECRET_KEY is not set in environment variables")
+		}
+		jwtSecretKey = []byte(key)
+	})
+
+	return jwtSecretKey
 }
 
 func GetIssuer() string {
@@ -30,18 +37,5 @@ func HashPassword(password string) ([]byte, error) {
 }
 
 func AccessTokenDuration() time.Duration {
-	return time.Duration(time.Now().Add(15 * time.Minute).Unix())
-}
-
-var usersDB = []model.User{
-	{
-		Username:       "John",
-		Email:          "john.doe@test.com",
-		HashedPassword: "john.doe.password",
-	},
-	{
-		Username:       "Jane",
-		Email:          "jane.doe@test.com",
-		HashedPassword: "jane.doe.password",
-	},
+	return 24 * time.Hour
 }

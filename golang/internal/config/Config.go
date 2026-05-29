@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -56,7 +57,7 @@ func Load() *Config {
 			RequestTimeout: time.Second * 5,
 		},
 		JWT: JWTConfig{
-			Secret: os.Getenv("SECRET_KEY"),
+			Secret: strings.TrimSpace(os.Getenv("JWT_SECRET_KEY")),
 		},
 	}
 }

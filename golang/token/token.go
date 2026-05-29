@@ -17,12 +17,6 @@ import (
 
 var ErrInvalidToken = errors.New("invalid token")
 
-var (
-	mx sync.RWMutex
-
-	refreshTokens = make(map[string]struct{})
-)
-
 type TokenManager struct {
 	repo          repository.UserRepository
 	mx            sync.RWMutex
@@ -40,19 +34,19 @@ func (m *TokenManager) CreateAccessToken(u *model.User) (string, error) {
 	secret := config.JWTSecret()
 	issuer := config.GetIssuer()
 
-	tokenID := uuid.New().String()
-
-	var mapClaims = jwt.MapClaims{
-		"iss":       issuer,
-		"sub":       u.ID,
-		"jti":       tokenID,
-		"nbf":       time.Now().Unix(),
-		"iat":       time.Now().Unix(),
-		"exp":       time.Now().Add(config.AccessTokenDuration()).Unix(),
-		"user_name": u.Username,
+	userClaims := claims.UserClaims{
+		Name:      u.Username,
+		Email:     u.Email,
+		TokenType: "access",
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    issuer,
+			Subject:   u.ID,
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(config.AccessTokenDuration())),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, mapClaims)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, userClaims)
 
 	signedToken, err := token.SignedString(secret)
 
