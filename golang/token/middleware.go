@@ -1,7 +1,6 @@
 package token
 
 import (
-	"context"
 	"fmt"
 	"golang/claims"
 	"golang/model"
@@ -10,22 +9,19 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type contextKey string
+func Middleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
 
-const userContextKey = contextKey("user")
-
-func Middleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		authHeader := r.Header.Get("Authorization")
+		authHeader := c.GetHeader("Authorization")
 
 		parts := strings.Fields(authHeader)
 
 		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 			return
 		}
 
@@ -33,13 +29,13 @@ func Middleware(next http.Handler) http.Handler {
 
 		if err != nil {
 			log.Printf("Token error: %v", err)
-			http.Error(w, "Invalid token", http.StatusUnauthorized)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 			return
 		}
 
-		ctx := putUserToContext(r.Context(), u)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+		c.Set("user", u)
+		c.Next()
+	}
 }
 
 func VerifyAccessToken(accessToken string) (model.User, error) {
@@ -60,8 +56,4 @@ func VerifyAccessToken(accessToken string) (model.User, error) {
 		Username: c.Name,
 		Email:    c.Email,
 	}, nil
-}
-
-func putUserToContext(ctx context.Context, u model.User) context.Context {
-	return context.WithValue(ctx, userContextKey, u)
 }

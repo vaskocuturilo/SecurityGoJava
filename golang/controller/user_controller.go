@@ -1,12 +1,13 @@
 package controller
 
 import (
-	"encoding/json"
 	"errors"
 	"golang/model"
 	"golang/service"
 	"log/slog"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 type UserController struct {
@@ -17,57 +18,55 @@ func NewUserController(service service.IUserService) *UserController {
 	return &UserController{service: service}
 }
 
-func (c *UserController) SignUp(w http.ResponseWriter, r *http.Request) {
+func (c *UserController) SignUp(ctx *gin.Context) {
 	var credentials model.Credential
 
-	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
+	if err := ctx.ShouldBindJSON(&credentials); err != nil {
 		slog.Info("Decode payload error", "error", err)
-		http.Error(w, "Invalid payload", http.StatusBadRequest)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid payload"})
 		return
 	}
 
 	if err := credentials.Validate(); err != nil {
 		slog.Info("Invalid Data", "error", err)
-		http.Error(w, "Invalid Data", http.StatusBadRequest)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Data"})
 		return
 	}
 
-	err := c.service.SignUp(r.Context(), &credentials)
+	err := c.service.SignUp(ctx.Request.Context(), &credentials)
 
 	if err != nil {
 		if errors.Is(err, model.ErrAlreadyExists) {
-			http.Error(w, "User already exists", http.StatusConflict)
+			ctx.JSON(http.StatusConflict, gin.H{"error": "User already exists"})
 			return
 		}
-		http.Error(w, "Internal error", http.StatusInternalServerError)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal error"})
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	ctx.JSON(http.StatusCreated, gin.H{})
 }
 
-func (c *UserController) Login(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
-
+func (c *UserController) Login(ctx *gin.Context) {
 	var credentials model.Credential
 
-	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
+	if err := ctx.ShouldBindJSON(&credentials); err != nil {
 		slog.Info("Decode payload error", "error", err)
-		http.Error(w, "Invalid payload", http.StatusBadRequest)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid payload"})
 		return
 	}
 
 	if err := credentials.Validate(); err != nil {
 		slog.Info("Invalid Data", "error", err)
-		http.Error(w, "Invalid Data", http.StatusBadRequest)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Data"})
 		return
 	}
 
-	user, err := c.service.Login(r.Context(), credentials.Email, credentials.Password)
+	user, err := c.service.Login(ctx.Request.Context(), credentials.Email, credentials.Password)
 
 	if err != nil {
 		slog.Warn("Failed login attempt", "email", credentials.Email, "err", err)
-		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
 	}
 
@@ -75,37 +74,32 @@ func (c *UserController) Login(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		slog.Error("Token generation failed", "err", err)
-		http.Error(w, "Internal error", http.StatusInternalServerError)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal error"})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-
-	json.NewEncoder(w).Encode(model.Response{
+	ctx.JSON(http.StatusOK, model.Response{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	})
 }
 
-func (c *UserController) Refresh(w http.ResponseWriter, r *http.Request) {
+func (c *UserController) Refresh(ctx *gin.Context) {
 	var req model.Request
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.RefreshToken == "" {
-		http.Error(w, "Invalid body", http.StatusBadRequest)
+	if err := ctx.ShouldBindJSON(&req); err != nil || req.RefreshToken == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid body"})
 		return
 	}
 
-	newAccess, newRefresh, err := c.service.Refresh(r.Context(), req.RefreshToken)
+	newAccess, newRefresh, err := c.service.Refresh(ctx.Request.Context(), req.RefreshToken)
 
 	if err != nil {
-		http.Error(w, "Unauthorized or invalid token", http.StatusUnauthorized)
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized or invalid token"})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-
-	json.NewEncoder(w).Encode(model.Response{
+	ctx.JSON(http.StatusOK, model.Response{
 		AccessToken:  newAccess,
 		RefreshToken: newRefresh,
 	})

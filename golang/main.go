@@ -17,6 +17,8 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -56,14 +58,16 @@ func main() {
 
 	ctrl := controller.NewUserController(serv)
 
-	mux := http.NewServeMux()
+	r := gin.Default()
 
-	mux.HandleFunc("POST /api/v1/auth/register", ctrl.SignUp)
-	mux.HandleFunc("POST /api/v1/auth/login", ctrl.Login)
-	mux.HandleFunc("POST /api/v1/auth/refresh", ctrl.Refresh)
-	mux.Handle("GET /api/v1/tasks", token.Middleware(http.HandlerFunc(app.Tasks)))
+	v1 := r.Group("/api/v1")
 
-	srv := http.Server{Addr: net.JoinHostPort(cfg.Server.Host, cfg.Server.Port), Handler: mux}
+	v1.POST("/register", ctrl.SignUp)
+	v1.POST("/login", ctrl.Login)
+	v1.POST("/refresh", ctrl.Refresh)
+	v1.GET("/tasks", token.Middleware(), app.Tasks)
+
+	srv := &http.Server{Addr: net.JoinHostPort(cfg.Server.Host, cfg.Server.Port), Handler: r}
 
 	go func() {
 		slog.Info("Server is starting on port", "port", cfg.Server.Port)
