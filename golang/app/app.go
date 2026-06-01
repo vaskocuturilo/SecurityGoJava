@@ -1,12 +1,13 @@
 package app
 
 import (
-	"encoding/json"
 	"log/slog"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
-func Tasks(w http.ResponseWriter, r *http.Request) {
+func Tasks(c *gin.Context) {
 	slog.Info("Tasks Endpoint")
 
 	tasks := map[string]string{
@@ -15,7 +16,5 @@ func Tasks(w http.ResponseWriter, r *http.Request) {
 		"3": "Task3",
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(tasks)
+	c.JSON(http.StatusOK, tasks)
 }

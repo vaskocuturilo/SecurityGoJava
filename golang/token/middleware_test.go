@@ -7,21 +7,25 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
 func TestMiddleware(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
 	os.Setenv("JWT_SECRET_KEY", "test-secret")
 
-	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
-
 	t.Run("Missing Authorization Header", func(t *testing.T) {
+		r := gin.New()
+
+		r.GET("/test", Middleware(), func(c *gin.Context) {
+			c.Status(http.StatusOK)
+		})
+
 		req := httptest.NewRequest("GET", "/test", nil)
 		rec := httptest.NewRecorder()
-
-		Middleware(nextHandler).ServeHTTP(rec, req)
+		r.ServeHTTP(rec, req)
 
 		if rec.Code != http.StatusUnauthorized {
 			t.Errorf("Expected 401, got %d", rec.Code)
@@ -29,11 +33,16 @@ func TestMiddleware(t *testing.T) {
 	})
 
 	t.Run("Invalid Token Format", func(t *testing.T) {
+		r := gin.New()
+		r.GET("/test", Middleware(), func(c *gin.Context) {
+			c.Status(http.StatusOK)
+		})
+
 		req := httptest.NewRequest("GET", "/test", nil)
-		req.Header.Set("Authorization", "Basic some-token") // Неверный формат (не Bearer)
+		req.Header.Set("Authorization", "Basic some-token")
 		rec := httptest.NewRecorder()
 
-		Middleware(nextHandler).ServeHTTP(rec, req)
+		r.ServeHTTP(rec, req)
 
 		if rec.Code != http.StatusUnauthorized {
 			t.Errorf("Expected 401, got %d", rec.Code)
@@ -42,6 +51,8 @@ func TestMiddleware(t *testing.T) {
 }
 
 func TestMiddleware_Success(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
 	os.Setenv("JWT_SECRET_KEY", "test-secret")
 
 	claims := jwt.MapClaims{
@@ -52,16 +63,19 @@ func TestMiddleware_Success(t *testing.T) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenStr, _ := token.SignedString([]byte("test-secret"))
 
+	r := gin.New()
+	nextCalled := false
+
+	r.GET("/test", Middleware(), func(c *gin.Context) {
+		nextCalled = true
+		c.Status(http.StatusOK)
+	})
+
 	req := httptest.NewRequest("GET", "/test", nil)
 	req.Header.Set("Authorization", "Bearer "+tokenStr)
 	rec := httptest.NewRecorder()
 
-	nextCalled := false
-	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		nextCalled = true
-	})
-
-	Middleware(nextHandler).ServeHTTP(rec, req)
+	r.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Errorf("Expected 200, got %d", rec.Code)

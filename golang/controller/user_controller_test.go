@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/gin-gonic/gin"
 )
 
 type MockUserService struct {
@@ -47,6 +49,8 @@ func (m *MockUserService) GenerateTokens(user *model.User) (string, string, erro
 }
 
 func TestUserController_SignUp_Table(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
 	tests := []struct {
 		name       string
 		body       any
@@ -105,13 +109,15 @@ func TestUserController_SignUp_Table(t *testing.T) {
 			}
 			ctrl := NewUserController(mockService)
 
-			var buf bytes.Buffer
-			json.NewEncoder(&buf).Encode(tc.body)
-
-			req := httptest.NewRequest(http.MethodPost, "/register", &buf)
 			rec := httptest.NewRecorder()
 
-			ctrl.SignUp(rec, req)
+			ctx, _ := gin.CreateTestContext(rec)
+
+			body, _ := json.Marshal(tc.body)
+			ctx.Request = httptest.NewRequest(http.MethodPost, "/register", bytes.NewBuffer(body))
+			ctx.Request.Header.Set("Content-Type", "application/json")
+
+			ctrl.SignUp(ctx)
 
 			if rec.Code != tc.wantStatus {
 				t.Errorf("got status %d, want %d", rec.Code, tc.wantStatus)
@@ -121,6 +127,8 @@ func TestUserController_SignUp_Table(t *testing.T) {
 }
 
 func TestUserController_Login_Table(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
 	testUser := &model.User{
 		ID:             "550e8400-e29b-41d4-a716-446655440100",
 		Email:          "test@test.com",
@@ -183,16 +191,18 @@ func TestUserController_Login_Table(t *testing.T) {
 				},
 			}
 
-			var buf bytes.Buffer
-			json.NewEncoder(&buf).Encode(tc.body)
-
 			ctrl := NewUserController(mockService)
-
-			req := httptest.NewRequest(http.MethodPost, "/login/", &buf)
 
 			rec := httptest.NewRecorder()
 
-			ctrl.Login(rec, req)
+			ctx, _ := gin.CreateTestContext(rec)
+
+			body, _ := json.Marshal(tc.body)
+
+			ctx.Request = httptest.NewRequest(http.MethodPost, "/login", bytes.NewBuffer(body))
+			ctx.Request.Header.Set("Content-Type", "application/json")
+
+			ctrl.Login(ctx)
 
 			if rec.Code != tc.wantStatus {
 				t.Errorf("got status %d, want %d", rec.Code, tc.wantStatus)
@@ -212,6 +222,8 @@ func TestUserController_Login_Table(t *testing.T) {
 }
 
 func TestUserController_Refresh(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
 	mockService := &MockUserService{
 		RefreshFunc: func(ctx context.Context, refreshToken string) (string, string, error) {
 			if refreshToken == "valid" {
@@ -223,14 +235,17 @@ func TestUserController_Refresh(t *testing.T) {
 	ctrl := NewUserController(mockService)
 
 	t.Run("Success", func(t *testing.T) {
-		body := map[string]string{"refresh_token": "valid"}
-		var buf bytes.Buffer
-		json.NewEncoder(&buf).Encode(body)
-
-		req := httptest.NewRequest(http.MethodPost, "/refresh", &buf)
 		rec := httptest.NewRecorder()
 
-		ctrl.Refresh(rec, req)
+		ctx, _ := gin.CreateTestContext(rec)
+
+		body := map[string]string{"refresh_token": "valid"}
+		jsonBody, _ := json.Marshal(body)
+
+		ctx.Request = httptest.NewRequest(http.MethodPost, "/refresh", bytes.NewBuffer(jsonBody))
+		ctx.Request.Header.Set("Content-Type", "application/json")
+
+		ctrl.Refresh(ctx)
 
 		if rec.Code != http.StatusOK {
 			t.Errorf("expected 200, got %d", rec.Code)
