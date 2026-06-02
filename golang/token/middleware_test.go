@@ -1,6 +1,7 @@
 package token
 
 import (
+	"golang/model"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -83,4 +84,47 @@ func TestMiddleware_Success(t *testing.T) {
 	if !nextCalled {
 		t.Error("Next handler was not called")
 	}
+}
+
+func TestRequireRole_Success(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	r := gin.New()
+	calledNext := false
+
+	r.POST("/tasks", func(c *gin.Context) {
+		c.Set("user", model.User{Role: "ADMIN"})
+		c.Next()
+	}, RequireRole("ADMIN"), func(c *gin.Context) {
+		calledNext = true
+		c.Status(http.StatusOK)
+	})
+
+	req := httptest.NewRequest(http.MethodPost, "/tasks", nil)
+	rec := httptest.NewRecorder()
+
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected 200, got %d", rec.Code)
+	}
+	if !calledNext {
+		t.Error("Next handler was not called")
+	}
+}
+
+func TestRequireRole_Manual(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	t.Run("Success", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(rec)
+		ctx.Set("user", model.User{Role: "ADMIN"})
+
+		RequireRole("ADMIN")(ctx)
+
+		if ctx.IsAborted() {
+			t.Error("Expected middleware to proceed, but it aborted")
+		}
+	})
 }

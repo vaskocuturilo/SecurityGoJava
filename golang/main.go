@@ -60,12 +60,14 @@ func main() {
 
 	r := gin.Default()
 
-	v1 := r.Group("/api/v1")
+	v1 := r.Group("/api/v1/users")
+	v2 := r.Group("/api/v1")
 
 	v1.POST("/register", ctrl.SignUp)
 	v1.POST("/login", ctrl.Login)
 	v1.POST("/refresh", ctrl.Refresh)
-	v1.GET("/tasks", token.Middleware(), app.Tasks)
+	v2.GET("/tasks", token.Middleware(), app.Tasks)
+	v2.POST("/tasks", token.Middleware(), token.RequireRole("ADMIN"), app.CreateTask)
 
 	srv := &http.Server{Addr: net.JoinHostPort(cfg.Server.Host, cfg.Server.Port), Handler: r}
 
