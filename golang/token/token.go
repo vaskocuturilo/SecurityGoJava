@@ -38,6 +38,7 @@ func (m *TokenManager) CreateAccessToken(u *model.User) (string, error) {
 		Name:      u.Username,
 		Email:     u.Email,
 		TokenType: "access",
+		Role:      u.Role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    issuer,
 			Subject:   u.ID,

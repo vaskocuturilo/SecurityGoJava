@@ -38,6 +38,7 @@ func TestTokenManager_CreateAccessToken(t *testing.T) {
 		ID:       "f47ac10b-58cc-4372-a567",
 		Username: "John",
 		Email:    "Doe@doe.com",
+		Role:     "USER",
 	}
 
 	tokenString, err := tokenMgr.CreateAccessToken(&mockUser)

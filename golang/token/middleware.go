@@ -53,7 +53,27 @@ func VerifyAccessToken(accessToken string) (model.User, error) {
 	}
 
 	return model.User{
+		ID:       c.Subject,
 		Username: c.Name,
 		Email:    c.Email,
+		Role:     c.Role,
 	}, nil
+}
+
+func RequireRole(requiredRole string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user, exists := c.Get("user")
+		if !exists {
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+
+		u := user.(model.User)
+
+		if u.Role != requiredRole {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Forbidden: insufficient permissions"})
+			return
+		}
+		c.Next()
+	}
 }
