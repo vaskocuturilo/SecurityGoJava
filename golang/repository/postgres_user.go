@@ -42,12 +42,12 @@ func (r *PostgresUserRepository) SignUp(ctx context.Context, credential *model.C
 }
 
 func (r *PostgresUserRepository) GetByEmail(ctx context.Context, email string) (*model.User, error) {
-	query := `SELECT id, email, password FROM users_db WHERE email = $1`
+	query := `SELECT id, email, password, role FROM users_db WHERE email = $1`
 
 	var u model.User
 	var hashedPwd string
 
-	err := r.db.QueryRowContext(ctx, query, email).Scan(&u.ID, &u.Email, &hashedPwd)
+	err := r.db.QueryRowContext(ctx, query, email).Scan(&u.ID, &u.Email, &hashedPwd, &u.Role)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, model.ErrUserNotFound

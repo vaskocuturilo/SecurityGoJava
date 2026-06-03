@@ -37,5 +37,5 @@ func HashPassword(password string) ([]byte, error) {
 }
 
 func AccessTokenDuration() time.Duration {
-	return 24 * time.Hour
+	return 15 * time.Minute
 }

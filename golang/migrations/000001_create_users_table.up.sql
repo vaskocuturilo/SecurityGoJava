@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE TABLE IF NOT EXISTS users_db
 (
     id         VARCHAR(36)  NOT NULL,
@@ -14,3 +16,14 @@ CREATE TABLE IF NOT EXISTS users_db
 );
 
 CREATE INDEX idx_users_email ON users_db (email);
+
+
+INSERT INTO users_db(id, email, password, role, enabled, created_at, updated_at)
+VALUES (gen_random_uuid(),
+        'admin@test.com',
+        '$2a$10$nsG.3gErRUakpvT/63ciiun5eUjhb1c0c3Ud/ZJW58wVAWKzAWPXm',
+        'CREATE',
+        true,
+        current_timestamp,
+        current_timestamp)
+ON CONFLICT (email) DO NOTHING;

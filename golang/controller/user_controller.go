@@ -70,6 +70,8 @@ func (c *UserController) Login(ctx *gin.Context) {
 		return
 	}
 
+	slog.Info("User loaded from DB", "role", user.Role)
+
 	accessToken, refreshToken, err := c.service.GenerateTokens(user)
 
 	if err != nil {
