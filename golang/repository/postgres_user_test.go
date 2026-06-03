@@ -47,11 +47,12 @@ func TestPostgresUserRepository_GetByEmail_Success(t *testing.T) {
 	expectedId := "123"
 	expectedEmail := "Email@email.com"
 	expectedPassword := "hashed-password"
+	expectedRole := "READER"
 
-	rows := sqlmock.NewRows([]string{"expectedId", "email", "password"}).
-		AddRow(expectedId, expectedEmail, expectedPassword)
+	rows := sqlmock.NewRows([]string{"expectedId", "email", "password", "role"}).
+		AddRow(expectedId, expectedEmail, expectedPassword, expectedRole)
 
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, email, password FROM users_db WHERE email = $1")).
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, email, password, role FROM users_db WHERE email = $1")).
 		WithArgs(expectedEmail).
 		WillReturnRows(rows)
 
@@ -93,7 +94,7 @@ func TestPostgresUserRepository_GetByEmail_NotFound(t *testing.T) {
 
 	expectedEmail := "unknow@email.com"
 
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, email, password FROM users_db WHERE email = $1")).
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, email, password, role FROM users_db WHERE email = $1")).
 		WithArgs(expectedEmail).WillReturnError(sql.ErrNoRows)
 
 	user, err := repo.GetByEmail(context.Background(), expectedEmail)

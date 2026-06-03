@@ -64,6 +64,8 @@ func (c *UserController) Login(ctx *gin.Context) {
 
 	user, err := c.service.Login(ctx.Request.Context(), credentials.Email, credentials.Password)
 
+	slog.Info("User loaded from DB", "username", user.Username, "role", user.Role)
+
 	if err != nil {
 		slog.Warn("Failed login attempt", "email", credentials.Email, "err", err)
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
