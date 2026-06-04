@@ -26,18 +26,19 @@ func main() {
 
 	db, err := sql.Open("postgres", cfg.Postgres.ConnString())
 
-	defer func(db *sql.DB) {
-		err := db.Close()
-		if err != nil {
-			slog.Warn("Failed to init Postgres: ", "error", err)
-		}
-	}(db)
+	if err != nil {
+		slog.Error("Failed to init Postgres: ", "error", err)
+		os.Exit(1)
+	}
+
+	defer db.Close()
 
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.Server.DBTimeout)
 	defer cancel()
 
 	if err := db.PingContext(ctx); err != nil {
-		slog.Warn("Postgres is not ready: ", "error", err)
+		slog.Error("Postgres is not ready: ", "error", err)
+		os.Exit(1)
 	} else {
 		slog.Info("Postgres is ready")
 	}
@@ -45,7 +46,8 @@ func main() {
 	err = migrations.RunMigrations(db)
 
 	if err != nil {
-		slog.Warn("Failed to init migration process: ", "error", err)
+		slog.Error("Failed to init migration process: ", "error", err)
+		os.Exit(1)
 	} else {
 		slog.Info("Successfully init migration process")
 	}
@@ -60,14 +62,14 @@ func main() {
 
 	r := gin.Default()
 
-	v1 := r.Group("/api/v1/users")
-	v2 := r.Group("/api/v1")
+	api := r.Group("/api/v1")
+	users := api.Group("/users")
 
-	v1.POST("/register", ctrl.SignUp)
-	v1.POST("/login", ctrl.Login)
-	v1.POST("/refresh", ctrl.Refresh)
-	v2.GET("/tasks", token.Middleware(), app.Tasks)
-	v2.POST("/tasks", token.Middleware(), token.RequireRole("CREATE"), app.CreateTask)
+	users.POST("/register", ctrl.SignUp)
+	users.POST("/login", ctrl.Login)
+	users.POST("/refresh", ctrl.Refresh)
+	api.GET("/tasks", token.Middleware(), app.Tasks)
+	api.POST("/tasks", token.Middleware(), token.RequireRole("CREATE"), app.CreateTask)
 
 	srv := &http.Server{Addr: net.JoinHostPort(cfg.Server.Host, cfg.Server.Port), Handler: r}
 

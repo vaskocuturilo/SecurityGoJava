@@ -50,26 +50,14 @@ func (s *UserService) Login(ctx context.Context, email, password string) (*model
 	return user, nil
 }
 
-func (s *UserService) Refresh(ctx context.Context, refreshToken string) (string, string, error) {
+func (s *UserService) Refresh(refreshToken string) (string, string, error) {
 	user, err := s.tokenManager.VerifyRefreshToken(refreshToken)
 
 	if err != nil {
 		return "", "", err
 	}
 
-	newAccess, err := s.tokenManager.CreateAccessToken(&user)
-
-	if err != nil {
-		return "", "", err
-	}
-
-	newRefresh, err := s.tokenManager.CreateRefreshToken(user)
-
-	if err != nil {
-		return "", "", err
-	}
-
-	return newAccess, newRefresh, nil
+	return s.GenerateTokens(&user)
 }
 
 func (s *UserService) GenerateTokens(user *model.User) (string, string, error) {

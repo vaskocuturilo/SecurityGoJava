@@ -20,7 +20,7 @@ func (m *MockUserRepository) SignUp(ctx context.Context, credential *model.Crede
 	panic("implement me")
 }
 
-func (m *MockUserRepository) Refresh(ctx context.Context, refreshToken string) (string, string, error) {
+func (m *MockUserRepository) Refresh(refreshToken string) (string, string, error) {
 	//TODO implement me
 	panic("implement me")
 }

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 type PostgresUserRepository struct {
@@ -38,6 +39,12 @@ func (r *PostgresUserRepository) SignUp(ctx context.Context, credential *model.C
 		now,
 		now,
 	)
+	if err != nil {
+		var pgErr *pq.Error
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return model.ErrAlreadyExists
+		}
+	}
 	return err
 }
 
@@ -59,6 +66,6 @@ func (r *PostgresUserRepository) GetByEmail(ctx context.Context, email string) (
 	return &u, nil
 }
 
-func (r *PostgresUserRepository) Refresh(ctx context.Context, refreshToken string) (string, string, error) {
+func (r *PostgresUserRepository) Refresh(refreshToken string) (string, string, error) {
 	return "", "", errors.New("not implemented")
 }

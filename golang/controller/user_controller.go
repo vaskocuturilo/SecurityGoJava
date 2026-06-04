@@ -22,14 +22,14 @@ func (c *UserController) SignUp(ctx *gin.Context) {
 	var credentials model.Credential
 
 	if err := ctx.ShouldBindJSON(&credentials); err != nil {
-		slog.Info("Decode payload error", "error", err)
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid payload"})
+		slog.Warn("Decode payload error", "error", err)
+		errorResponse(ctx, http.StatusBadRequest, "Invalid payload")
 		return
 	}
 
 	if err := credentials.Validate(); err != nil {
-		slog.Info("Invalid Data", "error", err)
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Data"})
+		slog.Warn("Validate data error", "error", err)
+		errorResponse(ctx, http.StatusBadRequest, "Invalid Data")
 		return
 	}
 
@@ -37,28 +37,28 @@ func (c *UserController) SignUp(ctx *gin.Context) {
 
 	if err != nil {
 		if errors.Is(err, model.ErrAlreadyExists) {
-			ctx.JSON(http.StatusConflict, gin.H{"error": "User already exists"})
+			errorResponse(ctx, http.StatusConflict, "User already exists")
 			return
 		}
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal error"})
+		errorResponse(ctx, http.StatusInternalServerError, "Internal error")
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{})
+	ctx.JSON(http.StatusCreated, gin.H{"message": "User created successfully"})
 }
 
 func (c *UserController) Login(ctx *gin.Context) {
 	var credentials model.Credential
 
 	if err := ctx.ShouldBindJSON(&credentials); err != nil {
-		slog.Info("Decode payload error", "error", err)
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid payload"})
+		slog.Warn("Decode payload error", "error", err)
+		errorResponse(ctx, http.StatusBadRequest, "Invalid payload")
 		return
 	}
 
 	if err := credentials.Validate(); err != nil {
-		slog.Info("Invalid Data", "error", err)
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Data"})
+		slog.Warn("Invalid Data", "error", err)
+		errorResponse(ctx, http.StatusBadRequest, "Invalid Data")
 		return
 	}
 
@@ -66,7 +66,7 @@ func (c *UserController) Login(ctx *gin.Context) {
 
 	if err != nil {
 		slog.Warn("Failed login attempt", "email", credentials.Email, "err", err)
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		errorResponse(ctx, http.StatusUnauthorized, "Invalid credentials")
 		return
 	}
 
@@ -75,8 +75,8 @@ func (c *UserController) Login(ctx *gin.Context) {
 	accessToken, refreshToken, err := c.service.GenerateTokens(user)
 
 	if err != nil {
-		slog.Error("Token generation failed", "err", err)
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal error"})
+		slog.Warn("Token generation failed", "err", err)
+		errorResponse(ctx, http.StatusInternalServerError, "Internal error")
 		return
 	}
 
@@ -89,15 +89,15 @@ func (c *UserController) Login(ctx *gin.Context) {
 func (c *UserController) Refresh(ctx *gin.Context) {
 	var req model.Request
 
-	if err := ctx.ShouldBindJSON(&req); err != nil || req.RefreshToken == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid body"})
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		errorResponse(ctx, http.StatusBadRequest, "Invalid body")
 		return
 	}
 
-	newAccess, newRefresh, err := c.service.Refresh(ctx.Request.Context(), req.RefreshToken)
+	newAccess, newRefresh, err := c.service.Refresh(req.RefreshToken)
 
 	if err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized or invalid token"})
+		errorResponse(ctx, http.StatusUnauthorized, "Unauthorized or invalid token")
 		return
 	}
 
@@ -105,4 +105,8 @@ func (c *UserController) Refresh(ctx *gin.Context) {
 		AccessToken:  newAccess,
 		RefreshToken: newRefresh,
 	})
+}
+
+func errorResponse(c *gin.Context, code int, message string) {
+	c.JSON(code, gin.H{"error": message})
 }
