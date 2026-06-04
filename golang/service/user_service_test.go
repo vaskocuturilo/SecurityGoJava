@@ -12,7 +12,7 @@ import (
 type MockRepository struct {
 	SignUpFunc     func(ctx context.Context, credential *model.Credential) error
 	GetByEmailFunc func(ctx context.Context, email string) (*model.User, error)
-	RefreshFunc    func(ctx context.Context, refreshToken string) (string, string, error)
+	RefreshFunc    func(refreshToken string) (string, string, error)
 }
 
 type MockTokenManager struct {
@@ -35,9 +35,9 @@ func (m *MockRepository) GetByEmail(ctx context.Context, email string) (*model.U
 	return nil, nil
 }
 
-func (m *MockRepository) Refresh(ctx context.Context, refreshToken string) (string, string, error) {
+func (m *MockRepository) Refresh(refreshToken string) (string, string, error) {
 	if m.RefreshFunc != nil {
-		return m.RefreshFunc(ctx, refreshToken)
+		return m.RefreshFunc(refreshToken)
 	}
 	return "", "", nil
 }
@@ -272,7 +272,7 @@ func TestUserService_Refresh(t *testing.T) {
 	serv := NewUserService(nil, mockTM)
 
 	t.Run("Success", func(t *testing.T) {
-		access, refresh, err := serv.Refresh(context.Background(), "valid-token")
+		access, refresh, err := serv.Refresh("valid-token")
 
 		if err != nil {
 			t.Errorf("Expected success, got %v", err)
@@ -283,7 +283,7 @@ func TestUserService_Refresh(t *testing.T) {
 	})
 
 	t.Run("Invalid Token", func(t *testing.T) {
-		_, _, err := serv.Refresh(context.Background(), "bad-token")
+		_, _, err := serv.Refresh("bad-token")
 		if err == nil {
 			t.Error("Expected error for bad token, got nil")
 		}

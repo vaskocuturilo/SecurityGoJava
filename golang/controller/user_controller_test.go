@@ -16,7 +16,7 @@ import (
 type MockUserService struct {
 	SignUpFunc         func(ctx context.Context, credential *model.Credential) error
 	LoginFunc          func(ctx context.Context, email, password string) (*model.User, error)
-	RefreshFunc        func(ctx context.Context, refreshToken string) (string, string, error)
+	RefreshFunc        func(refreshToken string) (string, string, error)
 	GenerateTokensFunc func(user *model.User) (string, string, error)
 }
 
@@ -34,9 +34,9 @@ func (m *MockUserService) Login(ctx context.Context, email, password string) (*m
 	return nil, nil
 }
 
-func (m *MockUserService) Refresh(ctx context.Context, refreshToken string) (string, string, error) {
+func (m *MockUserService) Refresh(refreshToken string) (string, string, error) {
 	if m.RefreshFunc != nil {
-		return m.RefreshFunc(ctx, refreshToken)
+		return m.RefreshFunc(refreshToken)
 	}
 	return "", "", nil
 }
@@ -225,7 +225,7 @@ func TestUserController_Refresh(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	mockService := &MockUserService{
-		RefreshFunc: func(ctx context.Context, refreshToken string) (string, string, error) {
+		RefreshFunc: func(refreshToken string) (string, string, error) {
 			if refreshToken == "valid" {
 				return "new-access", "new-refresh", nil
 			}

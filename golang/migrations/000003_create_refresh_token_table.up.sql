@@ -1,8 +1,10 @@
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE TABLE IF NOT EXISTS refresh_tokens_db
 (
-    id         VARCHAR(36)  NOT NULL,
+    id         UUID         NOT NULL DEFAULT gen_random_uuid(),
     token      varchar(255) NOT NULL,
-    user_id    varchar(36)  NOT NULL,
+    user_id    UUID         NOT NULL,
     expires_at TIMESTAMP    NOT NULL,
     revoked    BOOLEAN      NOT NULL DEFAULT FALSE,
 
