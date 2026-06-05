@@ -49,7 +49,7 @@ class RefreshTokenServiceTest {
     @BeforeEach
     void setUp() {
         testUser = new UserEntity();
-        testUser.setId("test-id");
+        testUser.setId(UUID.randomUUID());
         testUser.setEmail(TEST_EMAIL);
         testUser.setUsername(TEST_EMAIL);
         testUser.setPassword("hashed-password");

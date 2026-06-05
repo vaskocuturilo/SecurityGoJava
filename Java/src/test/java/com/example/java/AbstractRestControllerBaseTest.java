@@ -3,6 +3,7 @@ package com.example.java;
 import com.example.java.config.UserAuthenticationProvider;
 import com.example.java.dto.UserDto;
 import com.example.java.entity.UserEntity;
+import com.example.java.entity.UserRole;
 import com.example.java.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +37,7 @@ public abstract class AbstractRestControllerBaseTest {
             user.setEmail(TEST_EMAIL);
             user.setUsername(TEST_EMAIL);
             user.setPassword(passwordEncoder.encode(TEST_PASSWORD));
+            user.setRole(UserRole.READER);
             user.setEnabled(true);
             userRepository.save(user);
         }

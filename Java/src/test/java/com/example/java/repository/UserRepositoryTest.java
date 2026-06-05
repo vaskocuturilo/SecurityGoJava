@@ -1,6 +1,7 @@
 package com.example.java.repository;
 
 import com.example.java.entity.UserEntity;
+import com.example.java.entity.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -46,6 +47,7 @@ class UserRepositoryTest {
         user.setEmail(TEST_EMAIL);
         user.setUsername(TEST_EMAIL);
         user.setPassword(TEST_PASSWORD);
+        user.setRole(UserRole.READER);
         user.setEnabled(true);
         userRepository.save(user);
     }
