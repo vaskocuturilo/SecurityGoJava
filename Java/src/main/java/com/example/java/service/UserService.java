@@ -4,6 +4,7 @@ import com.example.java.config.UserAuthenticationProvider;
 import com.example.java.dto.*;
 import com.example.java.entity.RefreshTokenEntity;
 import com.example.java.entity.UserEntity;
+import com.example.java.entity.UserRole;
 import com.example.java.exception.UserException;
 import com.example.java.mapper.UserMapper;
 import com.example.java.repository.UserRepository;
@@ -69,6 +70,7 @@ public class UserService implements IUserService {
         }
 
         user.setEmail(userDto.email());
+        user.setRole(UserRole.READER);
 
         user.setUsername(userDto.email());
         user.setEnabled(true);

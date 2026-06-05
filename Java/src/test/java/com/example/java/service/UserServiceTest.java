@@ -68,7 +68,7 @@ class UserServiceTest {
     @BeforeEach
     void setupTestUser() {
         testUser = new UserEntity();
-        testUser.setId(UUID.randomUUID().toString());
+        testUser.setId(UUID.randomUUID());
         testUser.setEmail(TEST_EMAIL);
         testUser.setUsername(TEST_EMAIL);
         testUser.setPassword(TEST_PASSWORD);
