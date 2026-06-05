@@ -1,6 +1,8 @@
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE TABLE IF NOT EXISTS tasks_db
 (
-    id          VARCHAR(36) NOT NULL,
+    id          UUID NOT NULL DEFAULT gen_random_uuid(),
     title       VARCHAR(255),
     description VARCHAR(255),
 

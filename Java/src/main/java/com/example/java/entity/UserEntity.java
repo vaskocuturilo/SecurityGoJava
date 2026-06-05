@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @Entity
@@ -19,7 +20,7 @@ public class UserEntity implements UserDetails {
     @Id
     @Column(name = "id", updatable = false, nullable = false)
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    private UUID id;
 
     @Column(name = "username", nullable = false)
     private String username;
@@ -30,6 +31,10 @@ public class UserEntity implements UserDetails {
     @Column(nullable = false)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
+
+    @Column(nullable = false, name = "role")
+    @Enumerated(EnumType.STRING)
+    private UserRole role;
 
     @Column(name = "enabled")
     private boolean enabled = false;
