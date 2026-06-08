@@ -1,10 +1,10 @@
 ##      
 
-The demo project for Security and JWT auth working with Golang and Java.
+The demo project for Security and JWT auth is working with Golang and Java.
 
-### This project was created to demonstrate how to work with the Securuty.
+### This project was created to demonstrate how to work with the Security.
 
-- Create a REST API security service (/auth/register/ auth/login /auth/refresh /tasks).
+- Create a REST API security service (/auth/register/ auth/login /auth/refresh /auth/logout /tasks).
 - Add TTL(access token - between 10 and 15 minutes, refresh token - approximately 7 days).
 - Use secret from env.
 - Add Correct Global exception.
