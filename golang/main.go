@@ -69,8 +69,8 @@ func main() {
 	users.POST("/login", ctrl.Login)
 	users.POST("/refresh", ctrl.Refresh)
 	users.POST("/logout", ctrl.Logout)
-	api.GET("/tasks", token.Middleware(), app.Tasks)
-	api.POST("/tasks", token.Middleware(), token.RequireRole("CREATE"), app.CreateTask)
+	api.GET("/tasks", token.Middleware(repo), app.Tasks)
+	api.POST("/tasks", token.Middleware(repo), token.RequireRole("CREATE"), app.CreateTask)
 
 	srv := &http.Server{Addr: net.JoinHostPort(cfg.Server.Host, cfg.Server.Port), Handler: r}
 
