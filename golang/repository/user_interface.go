@@ -9,4 +9,5 @@ type UserRepository interface {
 	SignUp(ctx context.Context, credential *model.Credential) error
 	GetByEmail(ctx context.Context, email string) (*model.User, error)
 	Refresh(refreshToken string) (string, string, error)
+	Logout(ctx context.Context, userID string) error
 }

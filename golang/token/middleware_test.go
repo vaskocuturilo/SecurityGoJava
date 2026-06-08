@@ -1,6 +1,7 @@
 package token
 
 import (
+	"context"
 	"golang/model"
 	"net/http"
 	"net/http/httptest"
@@ -12,15 +13,26 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+type MockUserRepository struct {
+	GetByEmailFunc func(ctx context.Context, email string) (*model.User, error)
+}
+
 func TestMiddleware(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
+	mockRepo := &MockUserRepository{}
+
 	os.Setenv("JWT_SECRET_KEY", "test-secret")
 
+	mockRepo.GetByEmailFunc = func(ctx context.Context, email string) (*model.User, error) {
+		return &model.User{Email: "test@test.com", SecurityStamp: "some-uuid"}, nil
+	}
+
 	t.Run("Missing Authorization Header", func(t *testing.T) {
+
 		r := gin.New()
 
-		r.GET("/test", Middleware(), func(c *gin.Context) {
+		r.GET("/test", Middleware(mockRepo), func(c *gin.Context) {
 			c.Status(http.StatusOK)
 		})
 
@@ -35,7 +47,7 @@ func TestMiddleware(t *testing.T) {
 
 	t.Run("Invalid Token Format", func(t *testing.T) {
 		r := gin.New()
-		r.GET("/test", Middleware(), func(c *gin.Context) {
+		r.GET("/test", Middleware(mockRepo), func(c *gin.Context) {
 			c.Status(http.StatusOK)
 		})
 
@@ -56,10 +68,20 @@ func TestMiddleware_Success(t *testing.T) {
 
 	os.Setenv("JWT_SECRET_KEY", "test-secret")
 
+	mockRepo := &MockUserRepository{
+		GetByEmailFunc: func(ctx context.Context, email string) (*model.User, error) {
+			return &model.User{
+				Email:         "doe@doe.com",
+				SecurityStamp: "test-stamp",
+			}, nil
+		},
+	}
+
 	claims := jwt.MapClaims{
-		"user_name":  "John",
-		"user_email": "doe@doe.com",
-		"exp":        time.Now().Add(time.Hour).Unix(),
+		"user_name":      "John",
+		"user_email":     "doe@doe.com",
+		"security_stamp": "test-stamp",
+		"exp":            time.Now().Add(time.Hour).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenStr, _ := token.SignedString([]byte("test-secret"))
@@ -67,7 +89,7 @@ func TestMiddleware_Success(t *testing.T) {
 	r := gin.New()
 	nextCalled := false
 
-	r.GET("/test", Middleware(), func(c *gin.Context) {
+	r.GET("/test", Middleware(mockRepo), func(c *gin.Context) {
 		nextCalled = true
 		c.Status(http.StatusOK)
 	})

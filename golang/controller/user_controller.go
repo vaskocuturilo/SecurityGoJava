@@ -107,6 +107,17 @@ func (c *UserController) Refresh(ctx *gin.Context) {
 	})
 }
 
+func (c *UserController) Logout(ctx *gin.Context) {
+	userID := ctx.MustGet("userID").(string)
+	err := c.service.Logout(ctx, userID)
+
+	if err != nil {
+		errorResponse(ctx, http.StatusInternalServerError, "Failed logout")
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"message": "Logged out from all devices"})
+}
+
 func errorResponse(c *gin.Context, code int, message string) {
 	c.JSON(code, gin.H{"error": message})
 }

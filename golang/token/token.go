@@ -35,10 +35,11 @@ func (m *TokenManager) CreateAccessToken(u *model.User) (string, error) {
 	issuer := config.GetIssuer()
 
 	userClaims := claims.UserClaims{
-		Name:      u.Username,
-		Email:     u.Email,
-		TokenType: "access",
-		Role:      u.Role,
+		Name:          u.Username,
+		Email:         u.Email,
+		TokenType:     "access",
+		Role:          u.Role,
+		SecurityStamp: u.SecurityStamp,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    issuer,
 			Subject:   u.ID,
