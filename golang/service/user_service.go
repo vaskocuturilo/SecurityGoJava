@@ -60,6 +60,10 @@ func (s *UserService) Refresh(refreshToken string) (string, string, error) {
 	return s.GenerateTokens(&user)
 }
 
+func (s *UserService) Logout(ctx context.Context, userID string) error {
+	return s.repo.Logout(ctx, userID)
+}
+
 func (s *UserService) GenerateTokens(user *model.User) (string, string, error) {
 	access, err := s.tokenManager.CreateAccessToken(user)
 	if err != nil {

@@ -16,6 +16,7 @@ import (
 type MockUserService struct {
 	SignUpFunc         func(ctx context.Context, credential *model.Credential) error
 	LoginFunc          func(ctx context.Context, email, password string) (*model.User, error)
+	LogoutFunc         func(ctx context.Context, userID string) error
 	RefreshFunc        func(refreshToken string) (string, string, error)
 	GenerateTokensFunc func(user *model.User) (string, string, error)
 }
@@ -32,6 +33,13 @@ func (m *MockUserService) Login(ctx context.Context, email, password string) (*m
 		return m.LoginFunc(ctx, email, password)
 	}
 	return nil, nil
+}
+
+func (m *MockUserService) Logout(ctx context.Context, userID string) error {
+	if m.LogoutFunc != nil {
+		return m.LogoutFunc(ctx, userID)
+	}
+	return nil
 }
 
 func (m *MockUserService) Refresh(refreshToken string) (string, string, error) {

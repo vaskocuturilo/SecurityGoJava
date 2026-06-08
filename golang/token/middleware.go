@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"golang/claims"
 	"golang/model"
+	"golang/repository"
 	"golang/utils"
 	"log"
 	"net/http"
@@ -13,7 +14,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func Middleware() gin.HandlerFunc {
+func Middleware(repo repository.UserRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		authHeader := c.GetHeader("Authorization")
@@ -30,6 +31,12 @@ func Middleware() gin.HandlerFunc {
 		if err != nil {
 			log.Printf("Token error: %v", err)
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			return
+		}
+
+		user, err := repo.GetByEmail(c.Request.Context(), u.Email)
+		if err != nil || user.SecurityStamp != u.SecurityStamp {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Session revoked"})
 			return
 		}
 
@@ -53,10 +60,11 @@ func VerifyAccessToken(accessToken string) (model.User, error) {
 	}
 
 	return model.User{
-		ID:       c.Subject,
-		Username: c.Name,
-		Email:    c.Email,
-		Role:     c.Role,
+		ID:            c.Subject,
+		Username:      c.Name,
+		Email:         c.Email,
+		Role:          c.Role,
+		SecurityStamp: c.SecurityStamp,
 	}, nil
 }
 

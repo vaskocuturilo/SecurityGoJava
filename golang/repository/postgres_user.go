@@ -69,3 +69,11 @@ func (r *PostgresUserRepository) GetByEmail(ctx context.Context, email string) (
 func (r *PostgresUserRepository) Refresh(refreshToken string) (string, string, error) {
 	return "", "", errors.New("not implemented")
 }
+
+func (r *PostgresUserRepository) Logout(ctx context.Context, userID string) error {
+	query := `UPDATE users_db SET security_stamp = gen_random_uuid() WHERE id = $1`
+
+	_, err := r.db.ExecContext(ctx, query, userID)
+
+	return err
+}

@@ -9,5 +9,6 @@ type IUserService interface {
 	SignUp(ctx context.Context, credential *model.Credential) error
 	Login(ctx context.Context, email, password string) (*model.User, error)
 	Refresh(refreshToken string) (string, string, error)
+	Logout(ctx context.Context, userID string) error
 	GenerateTokens(user *model.User) (string, string, error)
 }

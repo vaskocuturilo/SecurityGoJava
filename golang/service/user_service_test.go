@@ -13,6 +13,7 @@ type MockRepository struct {
 	SignUpFunc     func(ctx context.Context, credential *model.Credential) error
 	GetByEmailFunc func(ctx context.Context, email string) (*model.User, error)
 	RefreshFunc    func(refreshToken string) (string, string, error)
+	LogoutFunc     func(ctx context.Context, userID string) error
 }
 
 type MockTokenManager struct {
@@ -40,6 +41,13 @@ func (m *MockRepository) Refresh(refreshToken string) (string, string, error) {
 		return m.RefreshFunc(refreshToken)
 	}
 	return "", "", nil
+}
+
+func (m *MockRepository) Logout(ctx context.Context, userID string) error {
+	if m.LogoutFunc != nil {
+		return m.LogoutFunc(ctx, userID)
+	}
+	return nil
 }
 
 func (m *MockTokenManager) CreateAccessToken(u *model.User) (string, error) {

@@ -11,8 +11,9 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type MockUserRepository struct {
-	GetByEmailFunc func(ctx context.Context, email string) (*model.User, error)
+func (m *MockUserRepository) Logout(ctx context.Context, userID string) error {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (m *MockUserRepository) SignUp(ctx context.Context, credential *model.Credential) error {

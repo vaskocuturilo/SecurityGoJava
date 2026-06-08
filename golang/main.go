@@ -68,6 +68,7 @@ func main() {
 	users.POST("/register", ctrl.SignUp)
 	users.POST("/login", ctrl.Login)
 	users.POST("/refresh", ctrl.Refresh)
+	users.POST("/logout", ctrl.Logout)
 	api.GET("/tasks", token.Middleware(), app.Tasks)
 	api.POST("/tasks", token.Middleware(), token.RequireRole("CREATE"), app.CreateTask)
 

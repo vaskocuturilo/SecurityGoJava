@@ -2,13 +2,14 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE IF NOT EXISTS users_db
 (
-    id         UUID         NOT NULL DEFAULT gen_random_uuid(),
-    email      VARCHAR(255) NOT NULL,
-    password   VARCHAR(255) NOT NULL,
-    role       VARCHAR(36)  NOT NULL DEFAULT 'READER',
-    enabled    BOOLEAN      NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMP,
-    updated_at TIMESTAMP,
+    id             UUID         NOT NULL DEFAULT gen_random_uuid(),
+    email          VARCHAR(255) NOT NULL,
+    password       VARCHAR(255) NOT NULL,
+    role           VARCHAR(36)  NOT NULL DEFAULT 'READER',
+    enabled        BOOLEAN      NOT NULL DEFAULT FALSE,
+    security_stamp UUID         NOT NULL DEFAULT gen_random_uuid(),
+    created_at     TIMESTAMP,
+    updated_at     TIMESTAMP,
 
     CONSTRAINT pk_users PRIMARY KEY (id),
     CONSTRAINT uq_users_email UNIQUE (email),
