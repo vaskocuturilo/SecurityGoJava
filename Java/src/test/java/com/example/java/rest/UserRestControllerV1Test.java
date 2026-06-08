@@ -17,9 +17,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import tools.jackson.databind.ObjectMapper;
 
-
-import static org.hamcrest.Matchers.containsString;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -123,7 +122,7 @@ class UserRestControllerV1Test extends AbstractRestControllerBaseTest {
     }
 
     @Test
-    @DisplayName("register: new user returns 201 with AuthResponse")
+    @DisplayName("register: new user returns 201 with message")
     void givenNewUser_whenRegister_thenReturn201() throws Exception {
         final SignUpDto signUpDto = new SignUpDto(
                 "newuser@test.com", TEST_PASSWORD.toCharArray());
@@ -135,10 +134,7 @@ class UserRestControllerV1Test extends AbstractRestControllerBaseTest {
                         .header(headerName, authToken)
                         .content(objectMapper.writeValueAsString(signUpDto)))
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", containsString("/users/")))
-                .andExpect(jsonPath("$.accessToken").isNotEmpty())
-                .andExpect(jsonPath("$.refreshToken").isNotEmpty())
-                .andExpect(jsonPath("$.user.email").value("newuser@test.com"));
+                .andExpect(jsonPath("$.message").value("User created successfully"));
     }
 
     @Test

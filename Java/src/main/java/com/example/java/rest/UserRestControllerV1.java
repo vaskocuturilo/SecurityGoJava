@@ -32,11 +32,12 @@ public class UserRestControllerV1 {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<@NonNull AuthResponse> register(@RequestBody @Valid SignUpDto userSignUp) {
+    public ResponseEntity<@NonNull RegisterResponse> register(@RequestBody @Valid SignUpDto userSignUp) {
         final AuthResponse response = userService.register(userSignUp);
+
         return ResponseEntity
                 .created(URI.create("/users/" + response.user().id()))
-                .body(response);
+                .body(new RegisterResponse("User created successfully"));
     }
 
     @PostMapping("/refresh")
