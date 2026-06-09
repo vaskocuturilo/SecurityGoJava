@@ -1,6 +1,6 @@
 ##      
 
-The demo project for Security and JWT auth is working with Golang and Java.
+The demo project for Security and JWT auth uses Golang and Java.
 
 ### This project was created to demonstrate how to work with the Security.
 
