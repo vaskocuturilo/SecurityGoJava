@@ -1,5 +1,7 @@
 package com.example.java.config.path;
 
+import java.util.Set;
+
 public final class SecurityConstants {
     private SecurityConstants() {
         /* This utility class should not be instantiated */
@@ -13,8 +15,6 @@ public final class SecurityConstants {
 
     };
 
-    public static final String[] ROLE_API_CLIENT = {
-            "USER",
-    };
+    public static final Set<String> ALLOWED_ALGORITHMS = Set.of("HS256");
 
 }

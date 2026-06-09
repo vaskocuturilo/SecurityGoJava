@@ -2,13 +2,19 @@ package com.example.java.config;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.interfaces.DecodedJWT;
+import com.example.java.config.path.SecurityConstants;
 import com.example.java.dto.UserDto;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import java.util.Base64;
+import java.util.Collections;
 import java.util.Date;
 
 @Getter
@@ -39,11 +45,31 @@ public class UserAuthenticationProvider {
                 .sign(algorithm);
     }
 
+    public Authentication validateToken(String token) {
+        final DecodedJWT decoded = verifyToken(token);
+
+        final UserDto user = UserDto.builder()
+                .email(decoded.getSubject())
+                .username(decoded.getClaim("username").asString())
+                .build();
+
+        return new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
+    }
+
     public String extractEmail(String token) {
-        final Algorithm algorithm = Algorithm.HMAC256(secretKey);
-        return JWT.require(algorithm)
+        return verifyToken(token).getSubject();
+    }
+
+    private DecodedJWT verifyToken(String token) {
+        final DecodedJWT unverified = JWT.decode(token);
+
+        if (!SecurityConstants.ALLOWED_ALGORITHMS.contains(unverified.getAlgorithm())) {
+            throw new JWTVerificationException(
+                    "Token algorithm '" + unverified.getAlgorithm() + "' is not allowed");
+        }
+
+        return JWT.require(Algorithm.HMAC256(secretKey))
                 .build()
-                .verify(token)
-                .getSubject();
+                .verify(token);
     }
 }
