@@ -10,7 +10,7 @@ The demo project for Security and JWT auth uses Golang and Java.
 - Add Correct Global exception.
 - The refresh token should be saved to the database.
 - Add Logout functionality.
-- Add Role-based
+- Add Role-based functionality.
 - Add Docker file.
 - Add Docker Compose.
 - Add unit(repository, service and rest) and integration tests with testcontainers.
