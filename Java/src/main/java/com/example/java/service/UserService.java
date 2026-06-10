@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 
 import java.nio.CharBuffer;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -70,7 +72,7 @@ public class UserService implements IUserService {
         }
 
         user.setEmail(userDto.email());
-        user.setRole(UserRole.READER);
+        user.setRoles(new HashSet<>(Set.of(UserRole.READER)));
 
         user.setUsername(userDto.email());
         user.setEnabled(true);

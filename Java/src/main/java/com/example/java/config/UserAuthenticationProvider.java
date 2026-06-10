@@ -6,16 +6,20 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.example.java.config.path.SecurityConstants;
 import com.example.java.dto.UserDto;
+import com.example.java.entity.UserRole;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Component
@@ -42,6 +46,7 @@ public class UserAuthenticationProvider {
                 .withIssuedAt(now)
                 .withExpiresAt(validity)
                 .withClaim("username", user.username())
+                .withClaim("roles", user.roles().stream().map(UserRole::name).toList())
                 .sign(algorithm);
     }
 
@@ -56,10 +61,6 @@ public class UserAuthenticationProvider {
         return new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
     }
 
-    public String extractEmail(String token) {
-        return verifyToken(token).getSubject();
-    }
-
     private DecodedJWT verifyToken(String token) {
         final DecodedJWT unverified = JWT.decode(token);
 
@@ -71,5 +72,29 @@ public class UserAuthenticationProvider {
         return JWT.require(Algorithm.HMAC256(secretKey))
                 .build()
                 .verify(token);
+    }
+
+    public String extractEmail(String token) {
+        return verifyToken(token).getSubject();
+    }
+
+    public List<GrantedAuthority> extractAuthorities(String token) {
+        final DecodedJWT decoded = verifyToken(token);
+        final List<String> roles = decoded.getClaim("roles").asList(String.class);
+
+        if (roles == null) {
+            return Collections.emptyList();
+        }
+
+        return roles.stream()
+                .map(role -> {
+                    try {
+                        UserRole.valueOf(role);
+                        return (GrantedAuthority) new SimpleGrantedAuthority("ROLE_" + role);
+                    } catch (IllegalArgumentException _) {
+                        throw new JWTVerificationException("Unknown role in token: " + role);
+                    }
+                })
+                .toList();
     }
 }

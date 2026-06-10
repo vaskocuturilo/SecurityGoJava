@@ -15,7 +15,9 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -47,7 +49,7 @@ class UserRepositoryTest {
         user.setEmail(TEST_EMAIL);
         user.setUsername(TEST_EMAIL);
         user.setPassword(TEST_PASSWORD);
-        user.setRole(UserRole.READER);
+        user.setRoles(new HashSet<>(Set.of(UserRole.READER)));
         user.setEnabled(true);
         userRepository.save(user);
     }

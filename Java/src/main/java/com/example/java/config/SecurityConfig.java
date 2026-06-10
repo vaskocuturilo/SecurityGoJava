@@ -5,9 +5,11 @@ import com.example.java.config.filter.APIKeyAuthFilter;
 import com.example.java.config.filter.JwtAuthFilter;
 import com.example.java.config.filter.UnauthorizedEntryPoint;
 import com.example.java.config.path.SecurityConstants;
+import com.example.java.entity.UserRole;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -32,7 +34,9 @@ public class SecurityConfig {
 
     public SecurityConfig(
             @Value("${http.auth-token-header-name}") String principalRequestHeader,
-            @Value("${http.auth-token}") String principalRequestValue, JwtAuthFilter jwtAuthFilter, UnauthorizedEntryPoint unauthorizedEntryPoint) {
+            @Value("${http.auth-token}") String principalRequestValue,
+            JwtAuthFilter jwtAuthFilter,
+            UnauthorizedEntryPoint unauthorizedEntryPoint) {
         this.principalRequestHeader = principalRequestHeader;
         this.principalRequestValue = principalRequestValue;
         this.jwtAuthFilter = jwtAuthFilter;
@@ -47,6 +51,8 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(SecurityConstants.PUBLIC_ROUTES).permitAll()
+                        .requestMatchers(HttpMethod.GET, SecurityConstants.PRIVATE_ROUTE).hasRole(String.valueOf(UserRole.READER))
+                        .requestMatchers(HttpMethod.POST, SecurityConstants.PRIVATE_ROUTE).hasRole(String.valueOf(UserRole.CREATE))
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))

@@ -13,6 +13,8 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 public abstract class AbstractRestControllerBaseTest {
@@ -37,7 +39,7 @@ public abstract class AbstractRestControllerBaseTest {
             user.setEmail(TEST_EMAIL);
             user.setUsername(TEST_EMAIL);
             user.setPassword(passwordEncoder.encode(TEST_PASSWORD));
-            user.setRole(UserRole.READER);
+            user.setRoles(new HashSet<>(Set.of(UserRole.READER)));
             user.setEnabled(true);
             userRepository.save(user);
         }
@@ -49,6 +51,7 @@ public abstract class AbstractRestControllerBaseTest {
                 .email(TEST_EMAIL)
                 .username(TEST_PASSWORD)
                 .active(true)
+                .roles(new HashSet<>(Set.of(UserRole.READER, UserRole.CREATE)))
                 .build();
         return userAuthenticationProvider.createToken(testUser);
     }

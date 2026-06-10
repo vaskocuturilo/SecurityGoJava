@@ -15,6 +15,8 @@ public final class SecurityConstants {
 
     };
 
+    public static final String PRIVATE_ROUTE = "/api/v1/tasks/**";
+
     public static final Set<String> ALLOWED_ALGORITHMS = Set.of("HS256");
 
 }
