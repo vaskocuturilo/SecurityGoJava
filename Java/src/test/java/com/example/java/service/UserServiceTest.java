@@ -7,6 +7,7 @@ import com.example.java.dto.SignUpDto;
 import com.example.java.dto.UserDto;
 import com.example.java.entity.RefreshTokenEntity;
 import com.example.java.entity.UserEntity;
+import com.example.java.entity.UserRole;
 import com.example.java.exception.UserException;
 import com.example.java.mapper.UserMapper;
 import com.example.java.repository.UserRepository;
@@ -24,6 +25,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.nio.CharBuffer;
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -74,7 +76,7 @@ class UserServiceTest {
         testUser.setPassword(TEST_PASSWORD);
         testUser.setEnabled(true);
 
-        testUserDto = new UserDto(UUID.randomUUID().toString(), TEST_EMAIL, TEST_EMAIL, true);
+        testUserDto = new UserDto(UUID.randomUUID().toString(), TEST_EMAIL, TEST_EMAIL, true, Set.of(UserRole.READER));
     }
 
     @Test

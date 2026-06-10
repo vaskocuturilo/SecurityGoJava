@@ -1,6 +1,7 @@
 package com.example.java.rest;
 
 import com.example.java.AbstractRestControllerBaseTest;
+import com.example.java.dto.Task;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import tools.jackson.databind.ObjectMapper;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -30,6 +32,9 @@ class RestTaskControllerV1Test extends AbstractRestControllerBaseTest {
     @Value("${http.auth-token}")
     private String authToken;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     private static final String ENDPOINT_PATH = "/api/v1/tasks";
 
     @Test
@@ -38,10 +43,25 @@ class RestTaskControllerV1Test extends AbstractRestControllerBaseTest {
                         .get(ENDPOINT_PATH)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON).header(headerName, authToken)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + generateTestToken()))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + generateTestToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[*]").isNotEmpty())
-                .andExpect(jsonPath("$[*]", hasSize(3)));
+                .andExpect(jsonPath("$[*]", hasSize(4)));
+    }
+
+    @Test
+    void givenTasks_whenCreateTask_thenStatus200() throws Exception {
+        final Task task = new Task("Task4", "Task4");
+
+        mockMvc.perform(MockMvcRequestBuilders
+                        .post(ENDPOINT_PATH)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON).header(headerName, authToken)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + generateTestToken())
+                        .content(objectMapper.writeValueAsString(task)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*]").isNotEmpty())
+                .andExpect(jsonPath("$[*]", hasSize(1)));
     }
 
     @Test
