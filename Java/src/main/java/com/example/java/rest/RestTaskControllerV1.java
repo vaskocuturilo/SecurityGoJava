@@ -1,31 +1,30 @@
 package com.example.java.rest;
 
 import com.example.java.dto.Task;
+import com.example.java.service.ITaskService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/tasks")
+@RequiredArgsConstructor
 public class RestTaskControllerV1 {
 
-    private final Map<String, String> tasks = new HashMap<>();
+    private final ITaskService taskService;
 
     @GetMapping
     public ResponseEntity<Map<String, String>> getTasks() {
-        tasks.put("1", "Task1");
-        tasks.put("2", "Task2");
-        tasks.put("3", "Task3");
-
-        return ResponseEntity.ok().body(tasks);
+        return ResponseEntity.ok().body(taskService.getTasks());
     }
 
     @PostMapping
-    public ResponseEntity<Map<String, String>> createTask(@RequestBody Task task) {
-        tasks.put(task.key(), task.value());
-
-        return ResponseEntity.ok().body(tasks);
+    public ResponseEntity<Task> createTask(@Valid @RequestBody Task task) {
+        final Task createdTask = taskService.createTask(task);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdTask);
     }
 }

@@ -59,9 +59,9 @@ class RestTaskControllerV1Test extends AbstractRestControllerBaseTest {
                         .accept(MediaType.APPLICATION_JSON).header(headerName, authToken)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + generateTestToken())
                         .content(objectMapper.writeValueAsString(task)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$[*]").isNotEmpty())
-                .andExpect(jsonPath("$[*]", hasSize(1)));
+                .andExpect(jsonPath("$[*]", hasSize(2)));
     }
 
     @Test
