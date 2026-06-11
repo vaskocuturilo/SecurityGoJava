@@ -38,7 +38,7 @@ security:
   jwt:
     token:
       secret-key: my-secret-key
-      expiration: 30000
+      expiration: 300000
     refresh-token:
       expiration: 604800000
 
