@@ -25,6 +25,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     implementation 'org.springframework.boot:spring-boot-starter-flyway'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation "com.bucket4j:bucket4j-core:${bucket4jCore}"
     implementation "com.auth0:java-jwt:${jwtVersion}"
     implementation "org.mapstruct:mapstruct:${mapstruct}"
     developmentOnly 'org.springframework.boot:spring-boot-devtools'

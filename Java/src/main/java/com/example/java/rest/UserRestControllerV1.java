@@ -1,6 +1,7 @@
 package com.example.java.rest;
 
 
+import com.example.java.annotation.RateLimiter;
 import com.example.java.dto.*;
 import com.example.java.exception.UserException;
 import com.example.java.service.IUserService;
@@ -27,11 +28,13 @@ public class UserRestControllerV1 {
     private final RefreshTokenService refreshTokenService;
 
     @PostMapping("/login")
+    @RateLimiter(key = "login")
     public ResponseEntity<@NonNull AuthResponse> login(@RequestBody @Valid CredentialsDto credentials) {
         return ResponseEntity.ok(userService.login(credentials));
     }
 
     @PostMapping("/register")
+    @RateLimiter(key = "register")
     public ResponseEntity<@NonNull RegisterResponse> register(@RequestBody @Valid SignUpDto userSignUp) {
         final AuthResponse response = userService.register(userSignUp);
 
@@ -41,6 +44,7 @@ public class UserRestControllerV1 {
     }
 
     @PostMapping("/refresh")
+    @RateLimiter(key = "refresh")
     public ResponseEntity<@NonNull AuthResponse> refresh(@RequestBody @Valid RefreshTokenRequest request) {
         return ResponseEntity.ok(userService.refresh(request));
     }
