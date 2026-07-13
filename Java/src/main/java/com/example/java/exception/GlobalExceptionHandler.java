@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
@@ -24,7 +25,7 @@ public class GlobalExceptionHandler {
                 "The user issue",
                 HttpStatus.NOT_FOUND.value(),
                 exception.getMessage(),
-                LocalDateTime.now());
+                LocalDateTime.now(ZoneId.systemDefault()));
 
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
@@ -38,7 +39,7 @@ public class GlobalExceptionHandler {
                 "The user issue",
                 exception.getStatus().value(),
                 exception.getMessage(),
-                LocalDateTime.now());
+                LocalDateTime.now(ZoneId.systemDefault()));
 
         return ResponseEntity
                 .status(exception.getStatus())
@@ -52,7 +53,7 @@ public class GlobalExceptionHandler {
                 "Token has expired",
                 HttpStatus.UNAUTHORIZED.value(),
                 exception.getMessage(),
-                LocalDateTime.now());
+                LocalDateTime.now(ZoneId.systemDefault()));
 
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
@@ -66,7 +67,7 @@ public class GlobalExceptionHandler {
                 "Invalid token",
                 HttpStatus.UNAUTHORIZED.value(),
                 exception.getMessage(),
-                LocalDateTime.now());
+                LocalDateTime.now(ZoneId.systemDefault()));
 
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
@@ -80,7 +81,7 @@ public class GlobalExceptionHandler {
                 "Invalid argument",
                 HttpStatus.BAD_REQUEST.value(),
                 exception.getMessage(),
-                LocalDateTime.now());
+                LocalDateTime.now(ZoneId.systemDefault()));
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
@@ -100,7 +101,7 @@ public class GlobalExceptionHandler {
                 "Invalid argument",
                 HttpStatus.BAD_REQUEST.value(),
                 message,
-                LocalDateTime.now());
+                LocalDateTime.now(ZoneId.systemDefault()));
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
@@ -114,11 +115,23 @@ public class GlobalExceptionHandler {
                 "Unexpected error:",
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 exception.getMessage(),
-                LocalDateTime.now());
+                LocalDateTime.now(ZoneId.systemDefault()));
 
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(issue);
+    }
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ErrorResponseDto> handleRateLimit(RateLimitExceededException e) {
+        return ResponseEntity
+                .status(HttpStatus.TOO_MANY_REQUESTS)
+                .header("Retry-After", "60")
+                .body(new ErrorResponseDto(
+                        "Rate limit exceeded",
+                        HttpStatus.TOO_MANY_REQUESTS.value(),
+                        e.getMessage(),
+                        LocalDateTime.now(ZoneId.systemDefault())));
     }
 }
