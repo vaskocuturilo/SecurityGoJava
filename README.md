@@ -11,6 +11,7 @@ The demo project for Security and JWT auth uses Golang and Java.
 - The refresh token should be saved to the database.
 - Add Logout functionality.
 - Add Rate Limiting.
+- Add Bcrypt cost (it should be config)
 - Add Role-based functionality.
 - Add Docker file.
 - Add Docker Compose.
