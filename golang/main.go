@@ -18,10 +18,15 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/didip/tollbooth/v7"
+	"github.com/didip/tollbooth_gin"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
+	limiter := tollbooth.NewLimiter(5, nil)
+	limiter.SetMessage("Too many requests, try again later.")
+
 	cfg := config.Load()
 
 	db, err := sql.Open("postgres", cfg.Postgres.ConnString())
@@ -65,8 +70,8 @@ func main() {
 	api := r.Group("/api/v1")
 	users := api.Group("/users")
 
-	users.POST("/register", ctrl.SignUp)
-	users.POST("/login", ctrl.Login)
+	users.POST("/register", tollbooth_gin.LimitHandler(limiter), ctrl.SignUp)
+	users.POST("/login", tollbooth_gin.LimitHandler(limiter), ctrl.Login)
 	users.POST("/refresh", ctrl.Refresh)
 	users.POST("/logout", ctrl.Logout)
 	api.GET("/tasks", token.Middleware(repo), app.Tasks)
