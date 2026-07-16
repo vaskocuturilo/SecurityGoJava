@@ -74,8 +74,8 @@ func main() {
 	users.POST("/login", tollbooth_gin.LimitHandler(limiter), ctrl.Login)
 	users.POST("/refresh", ctrl.Refresh)
 	users.POST("/logout", ctrl.Logout)
-	api.GET("/tasks", token.Middleware(repo), app.Tasks)
-	api.POST("/tasks", token.Middleware(repo), token.RequireRole("CREATE"), app.CreateTask)
+	api.GET("/tasks", token.Middleware(repo), tollbooth_gin.LimitHandler(limiter), app.Tasks)
+	api.POST("/tasks", token.Middleware(repo), token.RequireRole("CREATE"), tollbooth_gin.LimitHandler(limiter), app.CreateTask)
 
 	srv := &http.Server{Addr: net.JoinHostPort(cfg.Server.Host, cfg.Server.Port), Handler: r}
 
